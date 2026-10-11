@@ -454,7 +454,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Optical text recognition can make mistakes. Please check the spelling of your name and date of birth carefully against your physical card.',
+                      'Optical text recognition is prone to errors on physical identity cards. FormCheck does NOT treat scanned text as verified facts. Please check all details against your original physical documents. Note: automatic mismatch detection is currently paused.',
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark
@@ -743,9 +743,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Your verified details are ready.',
+                'These details were manually reviewed by you. FormCheck does not certify document authenticity—always bring physical originals to your appointment.',
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12.5,
                   color: isDark
                       ? AppColors.successTextDark
                       : AppColors.successTextLight,

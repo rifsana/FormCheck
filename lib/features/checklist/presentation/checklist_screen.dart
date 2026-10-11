@@ -328,12 +328,73 @@ class ChecklistScreen extends ConsumerWidget {
 
               const SizedBox(height: 28),
 
-              // Action button to proceed to Scanner (Phase 4)
-              ElevatedButton.icon(
-                key: const Key('proceed_to_scanner_button'),
-                onPressed: () => context.push('/scanner'),
-                icon: const Icon(Icons.document_scanner_outlined, size: 18),
-                label: const Text('Check Document Mismatches (OCR)'),
+              // Optional Document Scanner (Manual Review Tool)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.surfaceDark
+                      : AppColors.surfaceLight,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.document_scanner_outlined,
+                          size: 18,
+                          color: isDark
+                              ? AppColors.silverAccent
+                              : AppColors.sapphirePrimary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Document Details Review (Optional)',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textPrimaryLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'You can use on-device scanning to inspect names and dates for manual review. Note: automatic mismatch detection is currently paused to ensure accuracy.',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      key: const Key('proceed_to_scanner_button'),
+                      onPressed: () => context.push('/scanner'),
+                      icon: const Icon(
+                        Icons.document_scanner_outlined,
+                        size: 16,
+                      ),
+                      label: const Text('Scan & Review Document'),
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.button),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 20),

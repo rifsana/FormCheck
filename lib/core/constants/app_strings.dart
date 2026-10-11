@@ -9,7 +9,7 @@ class AppStrings {
       'Know what you need. Catch possible mismatches. Apply with confidence.';
   static const String welcomeCta = 'Check my documents';
   static const String welcomeScopeCaption =
-      'For first-time adult applicants · Normal scheme';
+      'For first-time adult applicants • Normal scheme';
   static const String welcomeConciseDisclaimer =
       'FormCheck is an independent preparation assistant, not a government service.';
 
