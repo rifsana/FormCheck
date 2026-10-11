@@ -1,0 +1,77 @@
+# ===================================================================
+# FormCheck — Comprehensive Git Ignore Rules
+# ===================================================================
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+**/doc/api/
+*.dart_tool/
+
+# Android
+**/android/.gradle/
+**/android/captures/
+**/android/gradleBuild/
+**/android/local.properties
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+**/android/key.properties
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# iOS & macOS
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/app.flx
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/**/Pods/
+**/macos/Pods/
+**/macos/.symlinks/
+*.mode1v3
+*.mode2v3
+*.nocache
+*.sublime-project
+*.sublime-workspace
+
+# IDEs & Editors
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+*~
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Logs & Temporary Files
+*.log
+*.tmp
+*.bak
+migrated_working_dir/
+.widget_preview/
+
+# Sensitive or Local Environment Overrides
+*.env
+*.env.*
+!*.env.example
