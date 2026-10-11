@@ -5,40 +5,70 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/official_sources.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/disclaimer_banner.dart';
-import '../../../core/widgets/official_source_badge.dart';
+import '../../../core/theme/app_theme.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   Future<void> _openOfficialPortal(BuildContext context) async {
-    final uri = Uri.parse(OfficialSources.applicationInstructions.url);
-    if (await canLaunchUrl(uri)) {
+    final uri = Uri.parse(OfficialSources.applicationGuide.url);
+    try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      try {
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not open external official link.'),
+            ),
+          );
+        }
+      }
     }
+  }
+
+  void _showDisclaimerDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
+        title: const Text('Legal Notice'),
+        content: const Text(
+          AppStrings.fullDisclaimerBody,
+          style: TextStyle(fontSize: 14, height: 1.45),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('I Understand'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showPrivacyDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.shield_outlined, color: AppColors.primary),
-            SizedBox(width: 8),
-            Text('Privacy Guarantee'),
-          ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
         ),
+        title: const Text('Privacy Architecture'),
         content: const SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '• 100% On-Device Processing: OCR and text extraction execute locally on your smartphone.\n\n'
-                '• No Cloud Uploads: Documents and images are never sent to external servers or cloud services.\n\n'
-                '• Zero Document Storage: Original photos are never saved by FormCheck without your permission.\n\n'
-                '• No Sensitive Identifiers: FormCheck does not ask for or store Aadhaar numbers or bank passwords.',
+                '• Zero Cloud Uploads: Document information is never transmitted to remote servers.\n\n'
+                '• Local Processing: On-device OCR processing executes entirely on your smartphone when scanning documents.\n\n'
+                '• No Remote Tracking: FormCheck contains no third-party analytics SDKs, trackers, or background telemetry.\n\n'
+                '• No Sensitive Identifiers: FormCheck does not ask for or collect sensitive numbers like Aadhaar or PAN.',
                 style: TextStyle(fontSize: 13.5, height: 1.45),
               ),
             ],
@@ -56,219 +86,240 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
+        titleSpacing: 20,
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
-                borderRadius: BorderRadius.circular(8),
+                color: isDark
+                    ? AppColors.surfaceSubtleDark
+                    : AppColors.surfaceSubtleLight,
+                borderRadius: BorderRadius.circular(AppRadius.badge),
+                border: Border.all(
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                ),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.assignment_turned_in_outlined,
-                color: AppColors.primary,
-                size: 20,
+                color: isDark
+                    ? AppColors.silverAccent
+                    : AppColors.sapphirePrimary,
+                size: 18,
               ),
             ),
             const SizedBox(width: 10),
-            const Text(
+            Text(
               AppStrings.appName,
-              style: TextStyle(fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
+                letterSpacing: -0.3,
+              ),
             ),
           ],
         ),
         actions: [
           IconButton(
+            tooltip: 'Legal Notice',
+            icon: const Icon(Icons.info_outline_rounded, size: 20),
+            onPressed: () => _showDisclaimerDialog(context),
+          ),
+          IconButton(
             tooltip: 'Privacy Information',
-            icon: const Icon(Icons.shield_outlined),
+            icon: const Icon(Icons.shield_outlined, size: 20),
             onPressed: () => _showPrivacyDialog(context),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Hero Banner
+              // Scope Pill (Oval badge)
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primary, Color(0xFF164E8C)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                  color: isDark
+                      ? AppColors.surfaceSubtleDark
+                      : AppColors.surfaceSubtleLight,
+                  borderRadius: BorderRadius.circular(AppRadius.badge),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.15),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                ),
+                child: Text(
+                  AppStrings.welcomeScopeCaption,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                    letterSpacing: -0.1,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // Headline
+              Text(
+                AppStrings.welcomeHeadline,
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+
+              const SizedBox(height: 8),
+
+              // Supporting Text
+              Text(
+                AppStrings.welcomeSupportingText,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+
+              const SizedBox(height: 28),
+
+              // Grouped Section for 3 Benefits (moderately rounded card)
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.surfaceDark
+                      : AppColors.surfaceLight,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        'Document Preparation Assistant',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                    _BenefitTile(
+                      icon: Icons.verified_outlined,
+                      title: AppStrings.benefit1Title,
+                      description: AppStrings.benefit1Desc,
+                      showDivider: true,
                     ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Prepare your passport\ndocuments with confidence.',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        height: 1.25,
-                        letterSpacing: -0.4,
-                      ),
+                    _BenefitTile(
+                      icon: Icons.compare_arrows_rounded,
+                      title: AppStrings.benefit2Title,
+                      description: AppStrings.benefit2Desc,
+                      showDivider: true,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Understand verified requirements, match names & dates, and avoid application delays.',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 13.5,
-                        height: 1.4,
-                      ),
+                    _BenefitTile(
+                      icon: Icons.lock_outline_rounded,
+                      title: AppStrings.benefit3Title,
+                      description: AppStrings.benefit3Desc,
+                      showDivider: false,
                     ),
                   ],
                 ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Source verification badge
-              const Center(child: OfficialSourceBadge()),
-
-              const SizedBox(height: 16),
-
-              // Prominent Disclaimer Banner
-              const DisclaimerBanner(),
-
-              const SizedBox(height: 16),
-
-              // Supported Scope Card
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryContainer.withValues(
-                            alpha: 0.5,
-                          ),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.person_pin_outlined,
-                          color: AppColors.primary,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              AppStrings.supportedScopeTitle,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              AppStrings.supportedScopeDescription,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                color: AppColors.textSecondaryLight,
-                                height: 1.35,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Key feature highlights
-              const Text(
-                'How FormCheck Helps You',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              _FeatureItem(
-                icon: Icons.checklist_rtl_rounded,
-                title: AppStrings.feature1Title,
-                description: AppStrings.feature1Desc,
-              ),
-              const SizedBox(height: 8),
-              _FeatureItem(
-                icon: Icons.compare_arrows_rounded,
-                title: AppStrings.feature2Title,
-                description: AppStrings.feature2Desc,
-              ),
-              const SizedBox(height: 8),
-              _FeatureItem(
-                icon: Icons.lock_outline_rounded,
-                title: AppStrings.feature3Title,
-                description: AppStrings.feature3Desc,
               ),
 
               const SizedBox(height: 24),
 
-              // Call to Action Buttons
+              // Concise Notice
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _showDisclaimerDialog(context),
+                  borderRadius: BorderRadius.circular(AppRadius.option),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.surfaceSubtleDark
+                          : AppColors.surfaceSubtleLight,
+                      borderRadius: BorderRadius.circular(AppRadius.option),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.borderDark
+                            : AppColors.borderLight,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 16,
+                          color: isDark
+                              ? AppColors.textMutedDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            AppStrings.welcomeConciseDisclaimer,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: isDark
+                              ? AppColors.textMutedDark
+                              : AppColors.textMutedLight,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // Prominent Action Button (Softly rounded oval pill)
               ElevatedButton.icon(
-                key: const Key('start_preparation_button'),
+                key: const Key('check_documents_button'),
                 onPressed: () => context.push('/profile'),
-                icon: const Icon(Icons.arrow_forward_rounded, size: 20),
-                label: const Text('Start Document Check'),
+                icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                label: const Text(AppStrings.welcomeCta),
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
 
-              OutlinedButton.icon(
-                onPressed: () => _openOfficialPortal(context),
-                icon: const Icon(Icons.open_in_browser_rounded, size: 18),
-                label: const Text('Visit Official Passport Seva Portal'),
+              // Official Portal Link
+              Center(
+                child: TextButton.icon(
+                  onPressed: () => _openOfficialPortal(context),
+                  icon: const Icon(Icons.open_in_browser_rounded, size: 15),
+                  label: const Text('Official Passport Seva Portal'),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    foregroundColor: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.sapphirePrimary,
+                  ),
+                ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -277,56 +328,82 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
-class _FeatureItem extends StatelessWidget {
+class _BenefitTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String description;
+  final bool showDivider;
 
-  const _FeatureItem({
+  const _BenefitTile({
     required this.icon,
     required this.title,
     required this.description,
+    required this.showDivider,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: AppColors.primary, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                  ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Icon(
+                  icon,
+                  size: 18,
+                  color: isDark
+                      ? AppColors.silverAccent
+                      : AppColors.sapphirePrimary,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondaryLight,
-                    height: 1.35,
-                  ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        if (showDivider)
+          Divider(
+            height: 1,
+            indent: 48,
+            color: isDark
+                ? AppColors.borderSubtleDark
+                : AppColors.borderSubtleLight,
+          ),
+      ],
     );
   }
 }

@@ -10,47 +10,61 @@ class DisclaimerBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.warningContainer.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(12),
+        color: isDark ? AppColors.noticeBgDark : AppColors.noticeBgLight,
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: AppColors.warning.withValues(alpha: 0.5),
-          width: 1.2,
+          color: isDark
+              ? AppColors.noticeBorderDark
+              : AppColors.noticeBorderLight,
+          width: 1,
         ),
       ),
-      padding: EdgeInsets.all(compact ? 12 : 14),
+      padding: EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: compact ? 10 : 12,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.info_outline_rounded,
-            color: AppColors.onWarningContainer,
-            size: 22,
+            color: isDark
+                ? AppColors.noticeTextDark
+                : AppColors.noticeTextLight,
+            size: 18,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   AppStrings.independentNoticeTitle,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.onWarningContainer,
+                    color: isDark
+                        ? AppColors.noticeTextDark
+                        : AppColors.noticeTextLight,
+                    letterSpacing: -0.1,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
                   compact
                       ? 'FormCheck is an independent tool and not affiliated with the Government of India.'
                       : AppStrings.independentNoticeBody,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.onWarningContainer,
-                    height: 1.4,
+                    color: isDark
+                        ? AppColors.noticeTextDark.withValues(alpha: 0.9)
+                        : AppColors.noticeTextLight,
+                    height: 1.35,
                   ),
                 ),
               ],

@@ -6,24 +6,32 @@ import 'package:form_check/core/constants/app_strings.dart';
 
 void main() {
   testWidgets(
-    'Welcome screen renders FormCheck branding, disclaimer, and start button',
+    'Redesigned Welcome screen renders minimal headline, benefit rows, and CTA button',
     (tester) async {
       await tester.pumpWidget(
         const ProviderScope(child: MaterialApp(home: WelcomeScreen())),
       );
 
-      // Branding & Header
+      // FormCheck Branding & Headline
       expect(find.text(AppStrings.appName), findsOneWidget);
-      expect(
-        find.text('Prepare your passport\ndocuments with confidence.'),
-        findsOneWidget,
-      );
+      expect(find.text(AppStrings.welcomeHeadline), findsOneWidget);
+      expect(find.text(AppStrings.welcomeSupportingText), findsOneWidget);
 
-      // Disclaimer
-      expect(find.text(AppStrings.independentNoticeTitle), findsOneWidget);
+      // 3 Compact Benefit Rows
+      expect(find.text(AppStrings.benefit1Title), findsOneWidget);
+      expect(find.text(AppStrings.benefit2Title), findsOneWidget);
+      expect(find.text(AppStrings.benefit3Title), findsOneWidget);
 
-      // Start button
-      expect(find.byKey(const Key('start_preparation_button')), findsOneWidget);
+      // Scope & Concise Notice
+      expect(find.text(AppStrings.welcomeScopeCaption), findsOneWidget);
+      expect(find.text(AppStrings.welcomeConciseDisclaimer), findsOneWidget);
+
+      // CTA Button
+      expect(find.byKey(const Key('check_documents_button')), findsOneWidget);
+      expect(find.text(AppStrings.welcomeCta), findsOneWidget);
+
+      // Official Link
+      expect(find.text('Official Passport Seva Portal'), findsOneWidget);
     },
   );
 }
