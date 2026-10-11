@@ -59,7 +59,7 @@ class WelcomeScreen extends StatelessWidget {
           children: [
             Icon(Icons.shield_outlined, color: AppColors.primary),
             SizedBox(width: 8),
-            Text('Privacy Guarantee'),
+            Text('Privacy Architecture'),
           ],
         ),
         content: const SingleChildScrollView(
@@ -68,10 +68,10 @@ class WelcomeScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '• On-Device Processing: Document text recognition executes locally on your phone where supported.\n\n'
-                '• No Cloud Uploads: Your documents and OCR results are never transmitted to external servers.\n\n'
-                '• Zero Document Storage: Original photos are not saved without your explicit permission.\n\n'
-                '• No Sensitive Identifiers: FormCheck does not ask for or collect Aadhaar or bank account numbers.',
+                '• Zero Cloud Uploads: Document information is never transmitted to remote servers.\n\n'
+                '• Local Processing Architecture: On-device OCR processing executes entirely on your smartphone when scanning documents.\n\n'
+                '• No Remote Tracking: FormCheck contains no third-party analytics SDKs, trackers, or background telemetry.\n\n'
+                '• No Sensitive Identifiers: FormCheck does not ask for or collect sensitive numbers like Aadhaar or PAN.',
                 style: TextStyle(fontSize: 13.5, height: 1.45),
               ),
             ],

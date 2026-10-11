@@ -39,8 +39,7 @@ class RequirementsEngine {
 
       case NonEcrCriterion.incomeTaxPayer:
         nonEcrEligible = true;
-        nonEcrDesc =
-            'Eligible for Non-ECR (Income Tax Payer in individual capacity)';
+        nonEcrDesc = 'Eligible for Non-ECR (Individual Income Tax Payer)';
         resolved.add(VerifiedRequirementsData.nonEcrTaxPayer);
         break;
 
@@ -51,21 +50,33 @@ class RequirementsEngine {
         resolved.add(VerifiedRequirementsData.nonEcrAge50);
         break;
 
+      case NonEcrCriterion.govtServant:
+        nonEcrEligible = true;
+        nonEcrDesc = 'Eligible for Non-ECR (Gazetted Government Servant)';
+        resolved.add(VerifiedRequirementsData.nonEcrGovtServant);
+        break;
+
       case NonEcrCriterion.vocationalDiploma2Year:
         nonEcrEligible = true;
         nonEcrDesc = 'Eligible for Non-ECR (2-Year NCVT/SCVT Recognized Vocational Diploma)';
         resolved.add(VerifiedRequirementsData.nonEcrVocational);
         break;
 
+      case NonEcrCriterion.spouseOfEligiblePerson:
+        nonEcrEligible = true;
+        nonEcrDesc = 'Eligible for Non-ECR (Spouse of Non-ECR eligible person)';
+        resolved.add(VerifiedRequirementsData.nonEcrSpouseEligible);
+        break;
+
       case NonEcrCriterion.none:
         nonEcrEligible = false;
-        nonEcrDesc = 'ECR Category (Emigration Check Required). No additional educational/tax certificate needed; passport will be stamped ECR.';
+        nonEcrDesc = 'ECR Category (Emigration Check Required). No educational or tax proof needed; passport will be stamped ECR.';
         break;
     }
 
     // 4. Conditional: Name Change
     if (profile.hasNameChange) {
-      resolved.add(VerifiedRequirementsData.nameChangeProof);
+      resolved.add(VerifiedRequirementsData.nameChangeMajor);
     }
 
     // 5. General in-person guidance notes

@@ -283,7 +283,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           const SizedBox(height: 8),
                           _SelectableOption(
                             title: 'Income Tax Payer',
-                            subtitle: 'Filed individual income tax return for the last year',
+                            subtitle: 'Filed individual income tax return for the last assessment year',
                             selected:
                                 profile.nonEcrCriterion ==
                                 NonEcrCriterion.incomeTaxPayer,
@@ -308,6 +308,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                           const SizedBox(height: 8),
                           _SelectableOption(
+                            title: 'Gazetted Government Servant / PSU',
+                            subtitle: 'Gazetted officers or immediate dependent family members',
+                            selected:
+                                profile.nonEcrCriterion ==
+                                NonEcrCriterion.govtServant,
+                            onTap: () => ref
+                                .read(profileProvider.notifier)
+                                .updateNonEcrCriterion(
+                                  NonEcrCriterion.govtServant,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          _SelectableOption(
                             title: '2-Year NCVT/SCVT Vocational Diploma',
                             subtitle: 'Completed recognized 2-year vocational trade diploma',
                             selected:
@@ -317,6 +330,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 .read(profileProvider.notifier)
                                 .updateNonEcrCriterion(
                                   NonEcrCriterion.vocationalDiploma2Year,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          _SelectableOption(
+                            title: 'Spouse of Non-ECR Eligible Person',
+                            subtitle: 'Spouse of an income tax payer, matriculate, or govt officer',
+                            selected:
+                                profile.nonEcrCriterion ==
+                                NonEcrCriterion.spouseOfEligiblePerson,
+                            onTap: () => ref
+                                .read(profileProvider.notifier)
+                                .updateNonEcrCriterion(
+                                  NonEcrCriterion.spouseOfEligiblePerson,
                                 ),
                           ),
                           const SizedBox(height: 8),

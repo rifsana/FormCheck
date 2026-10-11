@@ -10,17 +10,25 @@ enum DocumentCategory {
 
 enum RequirementClassification { mandatory, conditional, guidance, unverified }
 
+enum VerificationStatus {
+  verifiedOfficial,
+  regionalJurisdictionDiscretion,
+  unverified,
+}
+
 class AcceptedEvidence {
   final String id;
   final String name;
   final String issuingAuthority;
   final String? conditions;
+  final bool requiresOriginal;
 
   const AcceptedEvidence({
     required this.id,
     required this.name,
     required this.issuingAuthority,
     this.conditions,
+    this.requiresOriginal = true,
   });
 }
 
@@ -29,11 +37,11 @@ class DocumentRequirement {
   final String title;
   final DocumentCategory category;
   final RequirementClassification classification;
+  final VerificationStatus verificationStatus;
   final String explanation;
   final String? applicabilityCondition;
   final List<AcceptedEvidence> acceptedEvidence;
   final OfficialSource source;
-  final bool isVerified;
   final String? verificationNotes;
 
   const DocumentRequirement({
@@ -41,13 +49,18 @@ class DocumentRequirement {
     required this.title,
     required this.category,
     required this.classification,
+    required this.verificationStatus,
     required this.explanation,
     this.applicabilityCondition,
     required this.acceptedEvidence,
     required this.source,
-    required this.isVerified,
     this.verificationNotes,
   });
+
+  bool get isVerified =>
+      verificationStatus == VerificationStatus.verifiedOfficial;
+  bool get hasRegionalDiscretion =>
+      verificationStatus == VerificationStatus.regionalJurisdictionDiscretion;
 }
 
 class ChecklistResolution {

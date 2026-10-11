@@ -5,7 +5,7 @@ import 'package:form_check/features/checklist/domain/requirements_engine.dart';
 import 'package:form_check/features/checklist/data/verified_requirements_data.dart';
 
 void main() {
-  group('RequirementsEngine Unit Tests', () {
+  group('RequirementsEngine Audit Tests', () {
     test('Resolves mandatory DOB and Address for standard adult fresh normal application', () {
       const profile = ApplicantProfile(
         applicationType: ApplicationType.fresh,
@@ -30,10 +30,56 @@ void main() {
         (r) => r.id == 'req_proof_of_dob',
       );
       expect(dobReq.classification, RequirementClassification.mandatory);
-      expect(dobReq.isVerified, isTrue);
+      expect(dobReq.verificationStatus, VerificationStatus.verifiedOfficial);
       expect(dobReq.source.url, isNotEmpty);
       expect(dobReq.source.verifiedDate, isNotEmpty);
       expect(dobReq.acceptedEvidence.isNotEmpty, isTrue);
+
+      // Verify specific evidence items audited from MEA
+      expect(
+        dobReq.acceptedEvidence.any((e) => e.id == 'dob_service_record'),
+        isTrue,
+      );
+      final aadhaarEvidence = dobReq.acceptedEvidence.firstWhere(
+        (e) => e.id == 'dob_aadhaar',
+      );
+      expect(aadhaarEvidence.conditions, contains('DD/MM/YYYY'));
+    });
+
+    test('Resolves Non-ECR Government Servant criteria', () {
+      const profile = ApplicantProfile(
+        applicationType: ApplicationType.fresh,
+        scheme: PassportScheme.normal,
+        ageCategory: AgeCategory.adult18Plus,
+        nonEcrCriterion: NonEcrCriterion.govtServant,
+      );
+
+      final resolution = RequirementsEngine.resolve(profile);
+
+      expect(resolution.isSupported, isTrue);
+      expect(resolution.isNonEcrEligible, isTrue);
+      expect(
+        resolution.requirements.any((r) => r.id == 'req_non_ecr_govt_servant'),
+        isTrue,
+      );
+    });
+
+    test('Resolves Non-ECR Spouse of Eligible Person criteria', () {
+      const profile = ApplicantProfile(
+        applicationType: ApplicationType.fresh,
+        scheme: PassportScheme.normal,
+        ageCategory: AgeCategory.adult18Plus,
+        nonEcrCriterion: NonEcrCriterion.spouseOfEligiblePerson,
+      );
+
+      final resolution = RequirementsEngine.resolve(profile);
+
+      expect(resolution.isSupported, isTrue);
+      expect(resolution.isNonEcrEligible, isTrue);
+      expect(
+        resolution.requirements.any((r) => r.id == 'req_non_ecr_spouse'),
+        isTrue,
+      );
     });
 
     test(
@@ -104,13 +150,13 @@ void main() {
       );
     });
 
-    test('Includes Name Change Gazette proof when hasNameChange is true', () {
+    test('Includes Legal Name Change proof when hasNameChange is true', () {
       const profile = ApplicantProfile(hasNameChange: true);
 
       final resolution = RequirementsEngine.resolve(profile);
 
       expect(
-        resolution.requirements.any((r) => r.id == 'req_name_change'),
+        resolution.requirements.any((r) => r.id == 'req_name_change_major'),
         isTrue,
       );
     });
@@ -149,6 +195,14 @@ void main() {
       expect(resolution.unsupportedReason, contains('First-Time'));
     });
 
+    test('Audit: Address evidence contains Income Tax assessment and employer cert', () {
+      final addrEvidence =
+          VerifiedRequirementsData.proofOfAddress.acceptedEvidence;
+      expect(addrEvidence.any((e) => e.id == 'addr_it_assessment'), isTrue);
+      expect(addrEvidence.any((e) => e.id == 'addr_employer_cert'), isTrue);
+      expect(addrEvidence.any((e) => e.id == 'addr_rent_agreement'), isTrue);
+    });
+
     test('Ensures all static requirements have non-empty source URLs and verification dates', () {
       final all = [
         VerifiedRequirementsData.proofOfDob,
@@ -156,8 +210,10 @@ void main() {
         VerifiedRequirementsData.nonEcrEducation,
         VerifiedRequirementsData.nonEcrTaxPayer,
         VerifiedRequirementsData.nonEcrAge50,
+        VerifiedRequirementsData.nonEcrGovtServant,
         VerifiedRequirementsData.nonEcrVocational,
-        VerifiedRequirementsData.nameChangeProof,
+        VerifiedRequirementsData.nonEcrSpouseEligible,
+        VerifiedRequirementsData.nameChangeMajor,
         VerifiedRequirementsData.inPersonGuidance,
       ];
 
@@ -178,9 +234,9 @@ void main() {
           reason: '\${req.id} must have verification date',
         );
         expect(
-          req.isVerified,
-          isTrue,
-          reason: '\${req.id} must be marked verified',
+          req.verificationStatus,
+          isNotNull,
+          reason: '\${req.id} must have verificationStatus',
         );
       }
     });

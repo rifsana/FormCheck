@@ -8,7 +8,9 @@ enum NonEcrCriterion {
   matriculationOrAbove,
   incomeTaxPayer,
   age50Plus,
+  govtServant,
   vocationalDiploma2Year,
+  spouseOfEligiblePerson,
   none,
 }
 
@@ -18,7 +20,7 @@ class ApplicantProfile {
   final AgeCategory ageCategory;
   final NonEcrCriterion nonEcrCriterion;
   final bool hasNameChange;
-  final bool hasValidAddressProof;
+  final bool hasResidedMultipleAddressesPastYear;
 
   const ApplicantProfile({
     this.applicationType = ApplicationType.fresh,
@@ -26,7 +28,7 @@ class ApplicantProfile {
     this.ageCategory = AgeCategory.adult18Plus,
     this.nonEcrCriterion = NonEcrCriterion.matriculationOrAbove,
     this.hasNameChange = false,
-    this.hasValidAddressProof = true,
+    this.hasResidedMultipleAddressesPastYear = false,
   });
 
   bool get isSupported {
@@ -56,7 +58,7 @@ class ApplicantProfile {
     AgeCategory? ageCategory,
     NonEcrCriterion? nonEcrCriterion,
     bool? hasNameChange,
-    bool? hasValidAddressProof,
+    bool? hasResidedMultipleAddressesPastYear,
   }) {
     return ApplicantProfile(
       applicationType: applicationType ?? this.applicationType,
@@ -64,7 +66,9 @@ class ApplicantProfile {
       ageCategory: ageCategory ?? this.ageCategory,
       nonEcrCriterion: nonEcrCriterion ?? this.nonEcrCriterion,
       hasNameChange: hasNameChange ?? this.hasNameChange,
-      hasValidAddressProof: hasValidAddressProof ?? this.hasValidAddressProof,
+      hasResidedMultipleAddressesPastYear:
+          hasResidedMultipleAddressesPastYear ??
+          this.hasResidedMultipleAddressesPastYear,
     );
   }
 
@@ -78,7 +82,8 @@ class ApplicantProfile {
           ageCategory == other.ageCategory &&
           nonEcrCriterion == other.nonEcrCriterion &&
           hasNameChange == other.hasNameChange &&
-          hasValidAddressProof == other.hasValidAddressProof;
+          hasResidedMultipleAddressesPastYear ==
+              other.hasResidedMultipleAddressesPastYear;
 
   @override
   int get hashCode =>
@@ -87,5 +92,5 @@ class ApplicantProfile {
       ageCategory.hashCode ^
       nonEcrCriterion.hashCode ^
       hasNameChange.hashCode ^
-      hasValidAddressProof.hashCode;
+      hasResidedMultipleAddressesPastYear.hashCode;
 }
