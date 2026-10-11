@@ -21,16 +21,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> _openOfficialAdvisor() async {
     final uri = Uri.parse(OfficialSources.docAdvisor.url);
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not open external official link.'),
-          ),
-        );
+      try {
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not open external official link.'),
+            ),
+          );
+        }
       }
     }
   }
@@ -40,13 +42,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: AppColors.warning),
-            SizedBox(width: 8),
-            Text('Unsupported Category'),
-          ],
-        ),
+        title: const Text('Unsupported Category'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,13 +108,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       appBar: AppBar(
         title: const Text('Applicant Profile'),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(6),
+          preferredSize: const Size.fromHeight(2),
           child: LinearProgressIndicator(
             value: (_currentStep + 1) / 3,
             backgroundColor: isDark
-                ? AppColors.surfaceVariantDark
+                ? AppColors.borderDark
                 : AppColors.borderLight,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              isDark ? AppColors.silverAccent : AppColors.sapphirePrimary,
+            ),
+            minHeight: 2,
           ),
         ),
       ),
@@ -127,55 +126,43 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 18,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Step Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
+                    // Step Indicator
+                    Text(
+                      'STEP ${_currentStep + 1} OF 3',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.6,
                         color: isDark
-                            ? AppColors.surfaceVariantDark
-                            : AppColors.primaryContainer.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'Step ${_currentStep + 1} of 3',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
+                            ? AppColors.textMutedDark
+                            : AppColors.textMutedLight,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 6),
 
                     if (_currentStep == 0) ...[
-                      const Text(
-                        'Confirm Application Scope',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                        ),
+                      Text(
+                        'Application Scope',
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'FormCheck supports first-time adult ordinary passport applicants under the Normal scheme.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondaryLight,
-                        ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'FormCheck supports first-time adult ordinary passport applications under the Normal scheme.',
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 20),
 
-                      _QuestionCard(
-                        title: '1. Application Type',
+                      _SectionGroup(
+                        title: 'Application Type',
                         children: [
-                          _SelectableOption(
+                          _SelectableTile(
                             title: 'Fresh Passport (First-time)',
                             subtitle: 'You have never held an ordinary Indian passport',
                             selected:
@@ -184,9 +171,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             onTap: () => ref
                                 .read(profileProvider.notifier)
                                 .updateApplicationType(ApplicationType.fresh),
+                            showDivider: true,
                           ),
-                          const SizedBox(height: 8),
-                          _SelectableOption(
+                          _SelectableTile(
                             title: 'Re-issue of Passport',
                             subtitle: 'Renewal, validity expired, pages exhausted, or lost',
                             selected:
@@ -195,80 +182,76 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             onTap: () => ref
                                 .read(profileProvider.notifier)
                                 .updateApplicationType(ApplicationType.reissue),
+                            showDivider: false,
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
 
-                      _QuestionCard(
-                        title: '2. Application Scheme',
+                      _SectionGroup(
+                        title: 'Application Scheme',
                         children: [
-                          _SelectableOption(
+                          _SelectableTile(
                             title: 'Normal Scheme',
-                            subtitle: 'Standard processing time (routine appointment)',
+                            subtitle: 'Standard processing schedule and routine appointment',
                             selected: profile.scheme == PassportScheme.normal,
                             onTap: () => ref
                                 .read(profileProvider.notifier)
                                 .updateScheme(PassportScheme.normal),
+                            showDivider: true,
                           ),
-                          const SizedBox(height: 8),
-                          _SelectableOption(
+                          _SelectableTile(
                             title: 'Tatkaal Scheme',
-                            subtitle:
-                                'Urgent processing with special verification',
+                            subtitle: 'Urgent processing with Annexure F verification',
                             selected: profile.scheme == PassportScheme.tatkaal,
                             onTap: () => ref
                                 .read(profileProvider.notifier)
                                 .updateScheme(PassportScheme.tatkaal),
+                            showDivider: false,
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
 
-                      _QuestionCard(
-                        title: '3. Applicant Age',
+                      _SectionGroup(
+                        title: 'Applicant Age',
                         children: [
-                          _SelectableOption(
+                          _SelectableTile(
                             title: 'Adult (18 years of age or older)',
                             selected:
                                 profile.ageCategory == AgeCategory.adult18Plus,
                             onTap: () => ref
                                 .read(profileProvider.notifier)
                                 .updateAgeCategory(AgeCategory.adult18Plus),
+                            showDivider: true,
                           ),
-                          const SizedBox(height: 8),
-                          _SelectableOption(
+                          _SelectableTile(
                             title: 'Minor (Under 18 years of age)',
                             selected:
                                 profile.ageCategory == AgeCategory.minorUnder18,
                             onTap: () => ref
                                 .read(profileProvider.notifier)
                                 .updateAgeCategory(AgeCategory.minorUnder18),
+                            showDivider: false,
                           ),
                         ],
                       ),
                     ] else if (_currentStep == 1) ...[
-                      const Text(
+                      Text(
                         'Non-ECR Eligibility',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Emigration Check Not Required (Non-ECR) status allows travel abroad without emigration clearance. Select which verified category applies to you:',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondaryLight,
-                        ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Emigration Check Not Required (Non-ECR) status allows overseas travel without emigration clearance. Select which verified category applies to you:',
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 20),
 
-                      _QuestionCard(
-                        title: 'Select Your Highest Applicable Qualification / Status',
+                      _SectionGroup(
+                        title: 'Verified Category Criteria',
                         children: [
-                          _SelectableOption(
+                          _SelectableTile(
                             title: '10th Standard (Matriculation) or Higher',
                             subtitle: 'Holds 10th pass certificate, 12th, degree, or post-graduation',
                             selected:
@@ -279,9 +262,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 .updateNonEcrCriterion(
                                   NonEcrCriterion.matriculationOrAbove,
                                 ),
+                            showDivider: true,
                           ),
-                          const SizedBox(height: 8),
-                          _SelectableOption(
+                          _SelectableTile(
                             title: 'Income Tax Payer',
                             subtitle: 'Filed individual income tax return for the last assessment year',
                             selected:
@@ -292,9 +275,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 .updateNonEcrCriterion(
                                   NonEcrCriterion.incomeTaxPayer,
                                 ),
+                            showDivider: true,
                           ),
-                          const SizedBox(height: 8),
-                          _SelectableOption(
+                          _SelectableTile(
                             title: '50 Years of Age or Older',
                             subtitle: 'All individuals aged 50+ qualify for Non-ECR automatically',
                             selected:
@@ -305,9 +288,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 .updateNonEcrCriterion(
                                   NonEcrCriterion.age50Plus,
                                 ),
+                            showDivider: true,
                           ),
-                          const SizedBox(height: 8),
-                          _SelectableOption(
+                          _SelectableTile(
                             title: 'Gazetted Government Servant / PSU',
                             subtitle: 'Gazetted officers or immediate dependent family members',
                             selected:
@@ -318,9 +301,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 .updateNonEcrCriterion(
                                   NonEcrCriterion.govtServant,
                                 ),
+                            showDivider: true,
                           ),
-                          const SizedBox(height: 8),
-                          _SelectableOption(
+                          _SelectableTile(
                             title: '2-Year NCVT/SCVT Vocational Diploma',
                             subtitle: 'Completed recognized 2-year vocational trade diploma',
                             selected:
@@ -331,9 +314,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 .updateNonEcrCriterion(
                                   NonEcrCriterion.vocationalDiploma2Year,
                                 ),
+                            showDivider: true,
                           ),
-                          const SizedBox(height: 8),
-                          _SelectableOption(
+                          _SelectableTile(
                             title: 'Spouse of Non-ECR Eligible Person',
                             subtitle: 'Spouse of an income tax payer, matriculate, or govt officer',
                             selected:
@@ -344,52 +327,63 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 .updateNonEcrCriterion(
                                   NonEcrCriterion.spouseOfEligiblePerson,
                                 ),
+                            showDivider: true,
                           ),
-                          const SizedBox(height: 8),
-                          _SelectableOption(
+                          _SelectableTile(
                             title: 'None of the Above (ECR Status)',
-                            subtitle: 'Passport will be issued under ECR category; no educational proof required',
+                            subtitle: 'Passport issued under ECR category; no educational proof required',
                             selected:
                                 profile.nonEcrCriterion == NonEcrCriterion.none,
                             onTap: () => ref
                                 .read(profileProvider.notifier)
                                 .updateNonEcrCriterion(NonEcrCriterion.none),
+                            showDivider: false,
                           ),
                         ],
                       ),
                     ] else ...[
-                      const Text(
-                        'Additional Information',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                        ),
+                      Text(
+                        'Additional Conditions',
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Check for special conditions that alter document requirements.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondaryLight,
-                        ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Identify conditions that alter document requirements.',
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 20),
 
-                      _QuestionCard(
-                        title: 'Name or Identity Changes',
+                      _SectionGroup(
+                        title: 'Name & Identity History',
                         children: [
-                          SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text(
-                              'Have you ever changed your name?',
+                          Material(
+                            color: Colors.transparent,
+                            child: SwitchListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
+                              title: const Text(
+                                'Have you ever changed your name?',
+                                style: TextStyle(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'Includes legal name change, spelling correction, or change of surname after marriage',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: isDark
+                                      ? AppColors.textSecondaryDark
+                                      : AppColors.textSecondaryLight,
+                                ),
+                              ),
+                              value: profile.hasNameChange,
+                              onChanged: (v) => ref
+                                  .read(profileProvider.notifier)
+                                  .updateHasNameChange(v),
                             ),
-                            subtitle: const Text(
-                              'Includes legal name change, spelling correction in official records, or change of surname after marriage',
-                            ),
-                            value: profile.hasNameChange,
-                            onChanged: (v) => ref
-                                .read(profileProvider.notifier)
-                                .updateHasNameChange(v),
                           ),
                         ],
                       ),
@@ -398,28 +392,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryContainer.withValues(
-                            alpha: isDark ? 0.2 : 0.5,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
+                          color: isDark
+                              ? AppColors.surfaceSubtleDark
+                              : AppColors.surfaceSubtleLight,
+                          borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.2),
+                            color: isDark
+                                ? AppColors.borderDark
+                                : AppColors.borderLight,
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(
                               Icons.shield_outlined,
-                              size: 20,
-                              color: AppColors.primary,
+                              size: 18,
+                              color: isDark
+                                  ? AppColors.silverAccent
+                                  : AppColors.sapphirePrimary,
                             ),
-                            SizedBox(width: 10),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'FormCheck does not ask for or collect sensitive numbers like Aadhaar or PAN. '
-                                'We only evaluate which categories of proof apply to you.',
-                                style: TextStyle(fontSize: 12.5, height: 1.4),
+                                'FormCheck evaluates requirement rules only. We do not collect or store sensitive numbers such as Aadhaar or PAN.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark
+                                      ? AppColors.textSecondaryDark
+                                      : AppColors.textSecondaryLight,
+                                  height: 1.35,
+                                ),
                               ),
                             ),
                           ],
@@ -431,11 +434,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
 
-            // Navigation bar at bottom
+            // Bottom Navigation Strip
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
+                color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
                 border: Border(
                   top: BorderSide(
                     color: isDark
@@ -450,7 +453,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     key: const Key('profile_back_button'),
                     onPressed: _handleBack,
                     style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(100, 48),
+                      minimumSize: const Size(90, 48),
                     ),
                     child: Text(_currentStep == 0 ? 'Cancel' : 'Back'),
                   ),
@@ -459,9 +462,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: ElevatedButton(
                       key: const Key('profile_continue_button'),
                       onPressed: _handleContinue,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
                       child: Text(
                         _currentStep == 2 ? 'Generate Checklist' : 'Continue',
                       ),
@@ -477,112 +477,143 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
-class _QuestionCard extends StatelessWidget {
+class _SectionGroup extends StatelessWidget {
   final String title;
   final List<Widget> children;
 
-  const _QuestionCard({required this.title, required this.children});
+  const _SectionGroup({required this.title, required this.children});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 6),
+          child: Text(
+            title.toUpperCase(),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              color: isDark
+                  ? AppColors.textMutedDark
+                  : AppColors.textMutedLight,
             ),
-            const SizedBox(height: 12),
-            ...children,
-          ],
+          ),
         ),
-      ),
+        Material(
+          color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(children: children),
+        ),
+      ],
     );
   }
 }
 
-class _SelectableOption extends StatelessWidget {
+class _SelectableTile extends StatelessWidget {
   final String title;
   final String? subtitle;
   final bool selected;
   final VoidCallback onTap;
+  final bool showDivider;
 
-  const _SelectableOption({
+  const _SelectableTile({
     required this.title,
     this.subtitle,
     required this.selected,
     required this.onTap,
+    required this.showDivider,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected
-              ? (isDark
-                    ? AppColors.surfaceVariantDark
-                    : AppColors.primaryContainer.withValues(alpha: 0.35))
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: selected
-                ? AppColors.primary
-                : (isDark ? AppColors.borderDark : AppColors.borderLight),
-            width: selected ? 1.5 : 1.0,
-          ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              selected ? Icons.radio_button_checked : Icons.radio_button_off,
-              size: 20,
-              color: selected
-                  ? AppColors.primary
-                  : (isDark
-                        ? AppColors.textMutedDark
-                        : AppColors.textMutedLight),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
+    return Column(
+      children: [
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Icon(
+                      selected
+                          ? Icons.check_circle_rounded
+                          : Icons.radio_button_off,
+                      size: 19,
+                      color: selected
+                          ? (isDark
+                                ? AppColors.silverAccent
+                                : AppColors.sapphirePrimary)
+                          : (isDark
+                                ? AppColors.borderDark
+                                : AppColors.textMutedLight),
                     ),
                   ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondaryLight,
-                        height: 1.3,
-                      ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: selected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isDark
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textPrimaryLight,
+                            letterSpacing: -0.1,
+                          ),
+                        ),
+                        if (subtitle != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle!,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
+        if (showDivider)
+          Divider(
+            height: 1,
+            indent: 48,
+            color: isDark
+                ? AppColors.borderSubtleDark
+                : AppColors.borderSubtleLight,
+          ),
+      ],
     );
   }
 }

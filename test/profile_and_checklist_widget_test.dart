@@ -13,15 +13,15 @@ void main() {
     );
 
     // Step 1: Scope
-    expect(find.text('Step 1 of 3'), findsOneWidget);
-    expect(find.text('Confirm Application Scope'), findsOneWidget);
+    expect(find.text('STEP 1 OF 3'), findsOneWidget);
+    expect(find.text('Application Scope'), findsOneWidget);
 
     // Advance to Step 2
     await tester.tap(find.byKey(const Key('profile_continue_button')));
     await tester.pumpAndSettle();
 
     // Step 2: Non-ECR
-    expect(find.text('Step 2 of 3'), findsOneWidget);
+    expect(find.text('STEP 2 OF 3'), findsOneWidget);
     expect(find.text('Non-ECR Eligibility'), findsOneWidget);
 
     // Advance to Step 3
@@ -29,8 +29,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Step 3: Additional details
-    expect(find.text('Step 3 of 3'), findsOneWidget);
-    expect(find.text('Additional Information'), findsOneWidget);
+    expect(find.text('STEP 3 OF 3'), findsOneWidget);
+    expect(find.text('Additional Conditions'), findsOneWidget);
     expect(find.text('Generate Checklist'), findsOneWidget);
   });
 
@@ -42,7 +42,7 @@ void main() {
       );
 
       // Mandatory documents
-      expect(find.text('1. Mandatory Documents'), findsOneWidget);
+      expect(find.text('MANDATORY DOCUMENTS'), findsOneWidget);
       expect(find.text('Proof of Date of Birth (DOB)'), findsOneWidget);
       expect(find.text('Proof of Present Residential Address'), findsOneWidget);
 

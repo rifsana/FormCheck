@@ -12,16 +12,18 @@ class WelcomeScreen extends StatelessWidget {
   Future<void> _openOfficialPortal(BuildContext context) async {
     final uri = Uri.parse(OfficialSources.applicationGuide.url);
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not open external official link.'),
-          ),
-        );
+      try {
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not open external official link.'),
+            ),
+          );
+        }
       }
     }
   }
@@ -30,13 +32,7 @@ class WelcomeScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.info_outline_rounded, color: AppColors.warning),
-            SizedBox(width: 8),
-            Text('Legal Notice'),
-          ],
-        ),
+        title: const Text('Legal Notice'),
         content: const Text(
           AppStrings.fullDisclaimerBody,
           style: TextStyle(fontSize: 14, height: 1.45),
@@ -55,13 +51,7 @@ class WelcomeScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.shield_outlined, color: AppColors.primary),
-            SizedBox(width: 8),
-            Text('Privacy Architecture'),
-          ],
-        ),
+        title: const Text('Privacy Architecture'),
         content: const SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,26 +88,33 @@ class WelcomeScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer.withValues(
-                  alpha: isDark ? 0.2 : 0.8,
+                color: isDark
+                    ? AppColors.surfaceSubtleDark
+                    : AppColors.surfaceSubtleLight,
+                borderRadius: BorderRadius.circular(7),
+                border: Border.all(
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
                 ),
-                borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.assignment_turned_in_outlined,
-                color: AppColors.primary,
-                size: 20,
+                color: isDark
+                    ? AppColors.silverAccent
+                    : AppColors.sapphirePrimary,
+                size: 18,
               ),
             ),
             const SizedBox(width: 10),
             Text(
               AppStrings.appName,
               style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 19,
-                color: isDark ? AppColors.textPrimaryDark : AppColors.primary,
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
                 letterSpacing: -0.3,
               ),
             ),
@@ -126,12 +123,12 @@ class WelcomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Legal Notice',
-            icon: const Icon(Icons.info_outline_rounded, size: 22),
+            icon: const Icon(Icons.info_outline_rounded, size: 20),
             onPressed: () => _showDisclaimerDialog(context),
           ),
           IconButton(
             tooltip: 'Privacy Information',
-            icon: const Icon(Icons.shield_outlined, size: 22),
+            icon: const Icon(Icons.shield_outlined, size: 20),
             onPressed: () => _showPrivacyDialog(context),
           ),
           const SizedBox(width: 8),
@@ -146,126 +143,144 @@ class WelcomeScreen extends StatelessWidget {
               // Scope Pill
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
+                  horizontal: 9,
+                  vertical: 4.5,
                 ),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? AppColors.surfaceVariantDark
-                      : AppColors.primaryContainer.withValues(alpha: 0.6),
+                      ? AppColors.surfaceSubtleDark
+                      : AppColors.surfaceSubtleLight,
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
                     color: isDark
                         ? AppColors.borderDark
-                        : AppColors.primary.withValues(alpha: 0.2),
+                        : AppColors.borderLight,
                   ),
                 ),
                 child: Text(
                   AppStrings.welcomeScopeCaption,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: isDark
                         ? AppColors.textSecondaryDark
-                        : AppColors.primary,
+                        : AppColors.textSecondaryLight,
+                    letterSpacing: -0.1,
                   ),
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
 
               // Headline
               Text(
                 AppStrings.welcomeHeadline,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.6,
-                  height: 1.2,
-                ),
+                style: Theme.of(context).textTheme.headlineMedium,
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
 
               // Supporting Text
               Text(
                 AppStrings.welcomeSupportingText,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontSize: 15.5,
-                  height: 1.45,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+
+              const SizedBox(height: 28),
+
+              // Notion/Apple Style Grouped Inset Section for 3 Benefits
+              Container(
+                decoration: BoxDecoration(
                   color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
+                      ? AppColors.surfaceDark
+                      : AppColors.surfaceLight,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    _BenefitTile(
+                      icon: Icons.verified_outlined,
+                      title: AppStrings.benefit1Title,
+                      description: AppStrings.benefit1Desc,
+                      showDivider: true,
+                    ),
+                    _BenefitTile(
+                      icon: Icons.compare_arrows_rounded,
+                      title: AppStrings.benefit2Title,
+                      description: AppStrings.benefit2Desc,
+                      showDivider: true,
+                    ),
+                    _BenefitTile(
+                      icon: Icons.lock_outline_rounded,
+                      title: AppStrings.benefit3Title,
+                      description: AppStrings.benefit3Desc,
+                      showDivider: false,
+                    ),
+                  ],
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
 
-              // 3 Compact Benefit Rows
-              _BenefitRow(
-                icon: Icons.verified_outlined,
-                title: AppStrings.benefit1Title,
-                description: AppStrings.benefit1Desc,
-              ),
-              const SizedBox(height: 16),
-              _BenefitRow(
-                icon: Icons.compare_arrows_rounded,
-                title: AppStrings.benefit2Title,
-                description: AppStrings.benefit2Desc,
-              ),
-              const SizedBox(height: 16),
-              _BenefitRow(
-                icon: Icons.lock_outline_rounded,
-                title: AppStrings.benefit3Title,
-                description: AppStrings.benefit3Desc,
-              ),
-
-              const SizedBox(height: 28),
-
-              // Concise Disclaimer Strip
-              InkWell(
-                onTap: () => _showDisclaimerDialog(context),
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.warningContainer.withValues(
-                      alpha: isDark ? 0.25 : 0.45,
+              // Concise Notice
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _showDisclaimerDialog(context),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
                     ),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: AppColors.warning.withValues(alpha: 0.35),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.info_outline_rounded,
-                        size: 18,
-                        color: AppColors.onWarningContainer,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? AppColors.surfaceSubtleDark
+                          : AppColors.surfaceSubtleLight,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.borderDark
+                            : AppColors.borderLight,
                       ),
-                      const SizedBox(width: 10),
-                      const Expanded(
-                        child: Text(
-                          AppStrings.welcomeConciseDisclaimer,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.onWarningContainer,
-                            height: 1.35,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 16,
+                          color: isDark
+                              ? AppColors.textMutedDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            AppStrings.welcomeConciseDisclaimer,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                              height: 1.35,
+                            ),
                           ),
                         ),
-                      ),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        size: 18,
-                        color: AppColors.onWarningContainer.withValues(
-                          alpha: 0.7,
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: isDark
+                              ? AppColors.textMutedDark
+                              : AppColors.textMutedLight,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -276,7 +291,7 @@ class WelcomeScreen extends StatelessWidget {
               ElevatedButton.icon(
                 key: const Key('check_documents_button'),
                 onPressed: () => context.push('/profile'),
-                icon: const Icon(Icons.arrow_forward_rounded, size: 20),
+                icon: const Icon(Icons.arrow_forward_rounded, size: 18),
                 label: const Text(AppStrings.welcomeCta),
               ),
 
@@ -286,13 +301,13 @@ class WelcomeScreen extends StatelessWidget {
               Center(
                 child: TextButton.icon(
                   onPressed: () => _openOfficialPortal(context),
-                  icon: const Icon(Icons.open_in_browser_rounded, size: 16),
+                  icon: const Icon(Icons.open_in_browser_rounded, size: 15),
                   label: const Text('Official Passport Seva Portal'),
                   style: TextButton.styleFrom(
                     visualDensity: VisualDensity.compact,
                     foregroundColor: isDark
-                        ? AppColors.secondaryContainer
-                        : AppColors.secondary,
+                        ? AppColors.textSecondaryDark
+                        : AppColors.sapphirePrimary,
                   ),
                 ),
               ),
@@ -306,66 +321,81 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
-class _BenefitRow extends StatelessWidget {
+class _BenefitTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String description;
+  final bool showDivider;
 
-  const _BenefitRow({
+  const _BenefitTile({
     required this.icon,
     required this.title,
     required this.description,
+    required this.showDivider,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
       children: [
-        Container(
-          margin: const EdgeInsets.only(top: 2),
-          padding: const EdgeInsets.all(7),
-          decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.surfaceVariantDark
-                : AppColors.primaryContainer.withValues(alpha: 0.5),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            size: 19,
-            color: isDark ? const Color(0xFF8AB4F8) : AppColors.primary,
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.1,
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Icon(
+                  icon,
+                  size: 18,
+                  color: isDark
+                      ? AppColors.silverAccent
+                      : AppColors.sapphirePrimary,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                  height: 1.35,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
+        if (showDivider)
+          Divider(
+            height: 1,
+            indent: 48,
+            color: isDark
+                ? AppColors.borderSubtleDark
+                : AppColors.borderSubtleLight,
+          ),
       ],
     );
   }

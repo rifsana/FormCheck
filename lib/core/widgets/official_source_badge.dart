@@ -18,9 +18,11 @@ class OfficialSourceBadge extends StatelessWidget {
   Future<void> _openSource(BuildContext context) async {
     final uri = Uri.parse(url);
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      try {
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
+      } catch (_) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -29,48 +31,61 @@ class OfficialSourceBadge extends StatelessWidget {
           );
         }
       }
-    } catch (_) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error launching official link.')),
-        );
-      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => _openSource(context),
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: AppColors.primaryContainer.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.verified_outlined,
-              size: 15,
-              color: AppColors.primary,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _openSource(context),
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.surfaceSubtleDark
+                : AppColors.surfaceSubtleLight,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
             ),
-            const SizedBox(width: 6),
-            Text(
-              customTitle ??
-                  'Verified: MEA Passport Seva (${OfficialSources.verifiedDate})',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.verified_outlined,
+                size: 14,
+                color: isDark
+                    ? AppColors.silverAccent
+                    : AppColors.sapphirePrimary,
               ),
-            ),
-            const SizedBox(width: 4),
-            const Icon(Icons.open_in_new, size: 13, color: AppColors.primary),
-          ],
+              const SizedBox(width: 6),
+              Text(
+                customTitle ??
+                    'Verified: MEA Passport Seva (${OfficialSources.verifiedDate})',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight,
+                ),
+              ),
+              const SizedBox(width: 5),
+              Icon(
+                Icons.open_in_new,
+                size: 12,
+                color: isDark
+                    ? AppColors.textMutedDark
+                    : AppColors.textMutedLight,
+              ),
+            ],
+          ),
         ),
       ),
     );
