@@ -248,7 +248,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Non-ECR means you do not need emigration clearance when traveling abroad for work. If you passed 10th grade, pay income taxes, or are 50+, you qualify. Select what applies:',
+                        'Non-ECR means you do not need emigration clearance when traveling for employment to 18 notified countries (e.g. Gulf countries, Malaysia). Clearance is not required for tourism or study. If you qualify, select your category below:',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 20),
@@ -336,7 +336,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                           _SelectableTile(
                             title: 'None of these (ECR status)',
-                            subtitle: 'Your passport will have an ECR stamp; you do not need educational proof',
+                            subtitle: 'Your passport will be printed with Emigration Check Required; you do not need educational or tax proof',
                             selected:
                                 profile.nonEcrCriterion == NonEcrCriterion.none,
                             onTap: () => ref
@@ -376,7 +376,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 ),
                               ),
                               subtitle: Text(
-                                'Includes marriage surname change, deed poll, or legal spelling update',
+                                'Includes marriage surname addition, deed poll, or legal name update',
                                 style: TextStyle(
                                   fontSize: 12.5,
                                   color: isDark

@@ -302,9 +302,16 @@ class VerifiedRequirementsData {
     verificationNotes: 'Verified against MEA Document Advisor. Note: Changing surname after marriage follows a simpler process (marriage certificate / joint photo declaration).',
     acceptedEvidence: [
       AcceptedEvidence(
+        id: 'name_marriage_cert',
+        name: 'Marriage Certificate / Joint Photo Declaration (for post-marriage surname changes)',
+        issuingAuthority: 'Registrar of Marriages / Joint Declaration',
+        conditions: 'Sufficient if you only added or changed your surname post-marriage. Gazette notification and newspaper ads are NOT required for this.',
+      ),
+      AcceptedEvidence(
         id: 'name_gazette',
-        name: 'Official Gazette Notification showing new name',
+        name: 'Official Gazette Notification (for complete name change)',
         issuingAuthority: 'Department of Publication / State Gazette',
+        conditions: 'Mandatory for complete legal name changes (both first name and surname).',
       ),
       AcceptedEvidence(
         id: 'name_newspapers',
