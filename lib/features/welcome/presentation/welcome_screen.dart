@@ -5,17 +5,50 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/official_sources.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/disclaimer_banner.dart';
-import '../../../core/widgets/official_source_badge.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   Future<void> _openOfficialPortal(BuildContext context) async {
-    final uri = Uri.parse(OfficialSources.applicationInstructions.url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final uri = Uri.parse(OfficialSources.applicationGuide.url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open external official link.'),
+          ),
+        );
+      }
     }
+  }
+
+  void _showDisclaimerDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.info_outline_rounded, color: AppColors.warning),
+            SizedBox(width: 8),
+            Text('Legal Notice'),
+          ],
+        ),
+        content: const Text(
+          AppStrings.fullDisclaimerBody,
+          style: TextStyle(fontSize: 14, height: 1.45),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('I Understand'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showPrivacyDialog(BuildContext context) {
@@ -35,10 +68,10 @@ class WelcomeScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '• 100% On-Device Processing: OCR and text extraction execute locally on your smartphone.\n\n'
-                '• No Cloud Uploads: Documents and images are never sent to external servers or cloud services.\n\n'
-                '• Zero Document Storage: Original photos are never saved by FormCheck without your permission.\n\n'
-                '• No Sensitive Identifiers: FormCheck does not ask for or store Aadhaar numbers or bank passwords.',
+                '• On-Device Processing: Document text recognition executes locally on your phone where supported.\n\n'
+                '• No Cloud Uploads: Your documents and OCR results are never transmitted to external servers.\n\n'
+                '• Zero Document Storage: Original photos are not saved without your explicit permission.\n\n'
+                '• No Sensitive Identifiers: FormCheck does not ask for or collect Aadhaar or bank account numbers.',
                 style: TextStyle(fontSize: 13.5, height: 1.45),
               ),
             ],
@@ -56,14 +89,20 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
+        titleSpacing: 20,
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
+                color: AppColors.primaryContainer.withValues(
+                  alpha: isDark ? 0.2 : 0.8,
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
@@ -73,145 +112,157 @@ class WelcomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            const Text(
+            Text(
               AppStrings.appName,
-              style: TextStyle(fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 19,
+                color: isDark ? AppColors.textPrimaryDark : AppColors.primary,
+                letterSpacing: -0.3,
+              ),
             ),
           ],
         ),
         actions: [
           IconButton(
+            tooltip: 'Legal Notice',
+            icon: const Icon(Icons.info_outline_rounded, size: 22),
+            onPressed: () => _showDisclaimerDialog(context),
+          ),
+          IconButton(
             tooltip: 'Privacy Information',
-            icon: const Icon(Icons.shield_outlined),
+            icon: const Icon(Icons.shield_outlined, size: 22),
             onPressed: () => _showPrivacyDialog(context),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Hero Banner
+              // Scope Pill
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primary, Color(0xFF164E8C)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.15),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        'Document Preparation Assistant',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Prepare your passport\ndocuments with confidence.',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        height: 1.25,
-                        letterSpacing: -0.4,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Understand verified requirements, match names & dates, and avoid application delays.',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 13.5,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.surfaceVariantDark
+                      : AppColors.primaryContainer.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.primary.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Text(
+                  AppStrings.welcomeScopeCaption,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.primary,
+                  ),
                 ),
               ),
 
               const SizedBox(height: 16),
 
-              // Source verification badge
-              const Center(child: OfficialSourceBadge()),
+              // Headline
+              Text(
+                AppStrings.welcomeHeadline,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.6,
+                  height: 1.2,
+                ),
+              ),
 
+              const SizedBox(height: 10),
+
+              // Supporting Text
+              Text(
+                AppStrings.welcomeSupportingText,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontSize: 15.5,
+                  height: 1.45,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // 3 Compact Benefit Rows
+              _BenefitRow(
+                icon: Icons.verified_outlined,
+                title: AppStrings.benefit1Title,
+                description: AppStrings.benefit1Desc,
+              ),
               const SizedBox(height: 16),
-
-              // Prominent Disclaimer Banner
-              const DisclaimerBanner(),
-
+              _BenefitRow(
+                icon: Icons.compare_arrows_rounded,
+                title: AppStrings.benefit2Title,
+                description: AppStrings.benefit2Desc,
+              ),
               const SizedBox(height: 16),
+              _BenefitRow(
+                icon: Icons.lock_outline_rounded,
+                title: AppStrings.benefit3Title,
+                description: AppStrings.benefit3Desc,
+              ),
 
-              // Supported Scope Card
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
+              const SizedBox(height: 28),
+
+              // Concise Disclaimer Strip
+              InkWell(
+                onTap: () => _showDisclaimerDialog(context),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.warningContainer.withValues(
+                      alpha: isDark ? 0.25 : 0.45,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppColors.warning.withValues(alpha: 0.35),
+                    ),
+                  ),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryContainer.withValues(
-                            alpha: 0.5,
+                      const Icon(
+                        Icons.info_outline_rounded,
+                        size: 18,
+                        color: AppColors.onWarningContainer,
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          AppStrings.welcomeConciseDisclaimer,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.onWarningContainer,
+                            height: 1.35,
                           ),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.person_pin_outlined,
-                          color: AppColors.primary,
-                          size: 22,
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              AppStrings.supportedScopeTitle,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              AppStrings.supportedScopeDescription,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                color: AppColors.textSecondaryLight,
-                                height: 1.35,
-                              ),
-                            ),
-                          ],
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 18,
+                        color: AppColors.onWarningContainer.withValues(
+                          alpha: 0.7,
                         ),
                       ),
                     ],
@@ -219,56 +270,34 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 28),
 
-              // Key feature highlights
-              const Text(
-                'How FormCheck Helps You',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              _FeatureItem(
-                icon: Icons.checklist_rtl_rounded,
-                title: AppStrings.feature1Title,
-                description: AppStrings.feature1Desc,
-              ),
-              const SizedBox(height: 8),
-              _FeatureItem(
-                icon: Icons.compare_arrows_rounded,
-                title: AppStrings.feature2Title,
-                description: AppStrings.feature2Desc,
-              ),
-              const SizedBox(height: 8),
-              _FeatureItem(
-                icon: Icons.lock_outline_rounded,
-                title: AppStrings.feature3Title,
-                description: AppStrings.feature3Desc,
-              ),
-
-              const SizedBox(height: 24),
-
-              // Call to Action Buttons
+              // Prominent Action Button
               ElevatedButton.icon(
-                key: const Key('start_preparation_button'),
+                key: const Key('check_documents_button'),
                 onPressed: () => context.push('/profile'),
                 icon: const Icon(Icons.arrow_forward_rounded, size: 20),
-                label: const Text('Start Document Check'),
+                label: const Text(AppStrings.welcomeCta),
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
 
-              OutlinedButton.icon(
-                onPressed: () => _openOfficialPortal(context),
-                icon: const Icon(Icons.open_in_browser_rounded, size: 18),
-                label: const Text('Visit Official Passport Seva Portal'),
+              // Official Portal Link
+              Center(
+                child: TextButton.icon(
+                  onPressed: () => _openOfficialPortal(context),
+                  icon: const Icon(Icons.open_in_browser_rounded, size: 16),
+                  label: const Text('Official Passport Seva Portal'),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    foregroundColor: isDark
+                        ? AppColors.secondaryContainer
+                        : AppColors.secondary,
+                  ),
+                ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -277,12 +306,12 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
-class _FeatureItem extends StatelessWidget {
+class _BenefitRow extends StatelessWidget {
   final IconData icon;
   final String title;
   final String description;
 
-  const _FeatureItem({
+  const _BenefitRow({
     required this.icon,
     required this.title,
     required this.description,
@@ -290,43 +319,54 @@ class _FeatureItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: AppColors.primary, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondaryLight,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 2),
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.surfaceVariantDark
+                : AppColors.primaryContainer.withValues(alpha: 0.5),
+            shape: BoxShape.circle,
           ),
-        ],
-      ),
+          child: Icon(
+            icon,
+            size: 19,
+            color: isDark ? const Color(0xFF8AB4F8) : AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.1,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
