@@ -6,6 +6,7 @@ import '../data/system_document_image_picker.dart';
 import '../domain/document_image_picker.dart';
 import '../domain/document_scan_service.dart';
 import '../domain/document_text_extractor.dart';
+import '../domain/ocr_diagnostics.dart';
 
 final documentTextExtractorProvider = Provider<DocumentTextExtractor>((ref) {
   final extractor = MlKitTextExtractor();
@@ -41,6 +42,7 @@ class ScannerState {
   final List<String> notes;
   final String? errorMessage;
   final bool isConfirmed;
+  final OcrDiagnostics? diagnostics;
 
   const ScannerState({
     this.step = ScannerUiStep.idle,
@@ -55,6 +57,7 @@ class ScannerState {
     this.notes = const [],
     this.errorMessage,
     this.isConfirmed = false,
+    this.diagnostics,
   });
 
   ScannerState copyWith({
@@ -70,6 +73,7 @@ class ScannerState {
     List<String>? notes,
     String? errorMessage,
     bool? isConfirmed,
+    OcrDiagnostics? diagnostics,
   }) {
     return ScannerState(
       step: step ?? this.step,
@@ -84,6 +88,7 @@ class ScannerState {
       notes: notes ?? this.notes,
       errorMessage: errorMessage ?? this.errorMessage,
       isConfirmed: isConfirmed ?? this.isConfirmed,
+      diagnostics: diagnostics ?? this.diagnostics,
     );
   }
 }
@@ -130,6 +135,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
       alternateNames: parseResult?.candidateName?.alternates ?? const [],
       alternateDobs: parseResult?.candidateDob?.alternates ?? const [],
       notes: parseResult?.notes ?? const [],
+      diagnostics: parseResult?.diagnostics,
     );
   }
 

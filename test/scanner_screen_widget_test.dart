@@ -140,6 +140,7 @@ void main() {
 
         // Tap Confirm details button
         final confirmBtn = find.byKey(const Key('scanner_confirm_button'));
+        await tester.ensureVisible(confirmBtn);
         await tester.tap(confirmBtn);
         await tester.pumpAndSettle();
 

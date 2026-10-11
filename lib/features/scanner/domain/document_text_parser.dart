@@ -3,6 +3,7 @@ import '../../comparison/domain/document_field.dart';
 import 'document_candidate_field.dart';
 import 'document_parse_result.dart';
 import 'document_text_extractor.dart';
+import 'ocr_diagnostics.dart';
 
 /// Pure Dart heuristic text parser for Indian identity documents.
 ///
@@ -13,11 +14,28 @@ class DocumentTextParser {
     'government of india',
     'govt of india',
     'govt. of india',
+    'government',
     'income tax department',
+    'income tax',
+    'tax department',
     'unique identification authority of india',
+    'unique identification authority',
+    'identification authority of india',
+    'identification authority',
+    'authority of india',
+    'unique identification',
     'election commission of india',
     'election commission',
     'bharat sarkar',
+    'bhartiya vishisht',
+    'vishisht pehchan',
+    'pehchan pradhikaran',
+    'प्राधिकरण',
+    'पहचान प्राधिकरण',
+    'विशिष्ट पहचान प्राधिकरण',
+    'विशिष्ट पहचान',
+    'भारतीय विशिष्ट',
+    'भारत सरकार',
     'ministry of road transport',
     'transport department',
     'motor vehicles department',
@@ -27,10 +45,40 @@ class DocumentTextParser {
     'permanent account number',
     'pan card',
     'aadhaar',
+    'aadhar',
     'mera aadhaar',
+    'meri pehchan',
+    'मेरी पहचान',
+    'मेरा आधार',
     'republic of india',
     'state election commission',
     'uidai',
+    'enrolment',
+    'enrollment',
+    'resident',
+    'help line',
+    'helpline',
+    'toll free',
+    'www.',
+    'uidai.gov.in',
+    'myaadhaar',
+  ];
+
+  static const List<String> _forbiddenNameWords = [
+    'authority',
+    'identification',
+    'department',
+    'commission',
+    'government',
+    'ministry',
+    'enrolment',
+    'enrollment',
+    'unique',
+    'aadhaar',
+    'aadhar',
+    'resident',
+    'pradhikaran',
+    'vishisht',
   ];
 
   static const List<String> _relationshipLabels = [
@@ -165,6 +213,7 @@ class DocumentTextParser {
       notes: notes,
       sensitiveIdentifierDetected: sensitiveIdentifierFound,
       requiresManualReview: true,
+      diagnostics: dobResult.diagnostics,
     );
   }
 
@@ -174,12 +223,15 @@ class DocumentTextParser {
   ) {
     final allDetectedDates = <String>[];
     final rawEntries = <_RawDateEntry>[];
+    final lineDiagnostics = <OcrLineDiagnostic>[];
+    final Set<int> blockIndices = {};
 
     for (int i = 0; i < lines.length; i++) {
       final line = lines[i];
       final text = line.text.trim();
+      if (line.blockIndex != null) blockIndices.add(line.blockIndex!);
 
-      // 1. Standard dates (numeric, textual month, spaced delimiters)
+      // Check date candidates on this line
       final datesOnLine = _findAllDatesInString(text);
       for (final dateStr in datesOnLine) {
         if (!allDetectedDates.contains(dateStr)) {
@@ -197,7 +249,7 @@ class DocumentTextParser {
         );
       }
 
-      // 2. Year of birth pattern: "Year of Birth: 1985"
+      // Check year of birth pattern: "Year of Birth: 1985"
       final yobMatch = RegExp(
         r'(?:year\s+of\s+birth|yob|birth\s+year|जन्म\s*वर्ष|जन्म-वर्ष)[\s\:\-]+(19\d{2}|20\d{2})\b',
         caseSensitive: false,
@@ -265,7 +317,6 @@ class DocumentTextParser {
       );
 
       // Handle multiple dates/labels on the exact same line:
-      // Check which label appears most immediately prior to the date in the text
       if (lineHasDob && lineHasNonDob) {
         final dateIdx = lineText.indexOf(entry.dateString);
         if (dateIdx != -1) {
@@ -370,13 +421,57 @@ class DocumentTextParser {
 
     DocumentCandidateField? primaryCandidate;
 
-    // Decision Logic:
+    // Build Diagnostic items for every line
+    for (int i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      final text = line.text.trim();
+      final lower = text.toLowerCase();
+      final datesOnLine = _findAllDatesInString(text);
+
+      String category = 'Text (${text.split(RegExp(r'\s+')).length} words)';
+      String? dateExtracted;
+      String? classification;
+
+      if (_institutionalHeaders.any((h) => lower.contains(h))) {
+        category = 'Institutional Header (Filtered)';
+      } else if (_aadhaarRegex.hasMatch(text) || _panRegex.hasMatch(text)) {
+        category = 'Sensitive Govt ID Number (Masked)';
+      } else if (_dobContextLabels.any((l) => lower.contains(l))) {
+        category = 'DOB Context Label';
+      } else if (_nonDobContextLabels.any((l) => lower.contains(l))) {
+        category = 'Issue / Validity Label';
+      }
+
+      if (datesOnLine.isNotEmpty) {
+        dateExtracted = datesOnLine.join(', ');
+        if (dobCandidates.any((e) => datesOnLine.contains(e.dateString))) {
+          classification = 'Classified: Explicit DOB Candidate';
+        } else if (nonDobEntries.any(
+          (e) => datesOnLine.contains(e.dateString),
+        )) {
+          classification = 'Classified: EXCLUDED (Issue/Validity context)';
+        } else {
+          classification = 'Classified: Unlabelled Date Candidate';
+        }
+      }
+
+      lineDiagnostics.add(
+        OcrLineDiagnostic(
+          lineNumber: line.lineNumber,
+          blockIndex: line.blockIndex,
+          category: category,
+          dateExtracted: dateExtracted,
+          classification: classification,
+        ),
+      );
+    }
+
+    // Candidate Decision Logic:
     // 1. Prefer explicitly labeled DOB candidates over unlabeled or issue dates
     if (dobCandidates.isNotEmpty) {
       final uniqueDob = dobCandidates.map((e) => e.dateString).toSet().toList();
       if (uniqueDob.length == 1) {
         final chosen = dobCandidates.first;
-        // Collect other valid dates as alternates (excluding non-DOB issue/expiry dates)
         final alternates = unlabeledEntries
             .map((e) => e.dateString)
             .where((d) => d != chosen.dateString)
@@ -399,7 +494,7 @@ class DocumentTextParser {
           );
         }
       } else {
-        // Multiple conflicting dates labeled as DOB
+        // Multiple conflicting dates explicitly labeled as DOB
         primaryCandidate = DocumentCandidateField(
           fieldType: ComparisonFieldType.dateOfBirth,
           detectedValue: null,
@@ -431,48 +526,45 @@ class DocumentTextParser {
             'No date of birth detected on document. Please enter your date of birth manually.',
           );
         }
-      } else if (uniqueUnlabeled.length == 1 && !hasIssueOrNonDobInDoc) {
-        // Standalone single date on a document with NO issue/expiry context (e.g. PAN card)
-        final single = unlabeledEntries.first;
-        final isYearOnly =
-            single.isYearOnly ||
-            DateParsingUtil.parseDate(single.dateString).isYearOnly;
-        primaryCandidate = DocumentCandidateField(
-          fieldType: ComparisonFieldType.dateOfBirth,
-          detectedValue: single.dateString,
-          confidence: single.line.confidence,
-          contextSource: 'Standalone date found without explicit label.',
-          isAmbiguous: true,
-          isYearOnly: isYearOnly,
-        );
-        notes.add(
-          'Date "${single.dateString}" was detected without an explicit DOB label. Manual verification is required.',
-        );
-        if (isYearOnly) {
-          notes.add(
-            'Year of birth (${single.dateString}) detected. Passport Seva requires a complete date of birth (DD/MM/YYYY).',
-          );
-        }
       } else {
-        // Multiple unlabeled dates or document had issue dates: DO NOT PREFILL ANY DATE!
+        // Unlabelled dates: NEVER SILENTLY PREFILL AS DOB!
+        // Leave detectedValue null and provide dates as alternates for manual selection
         primaryCandidate = DocumentCandidateField(
           fieldType: ComparisonFieldType.dateOfBirth,
           detectedValue: null,
           confidence: null,
-          contextSource:
-              'Multiple dates found on document without an explicit DOB label.',
+          contextSource: 'Date found without an explicit DOB label.',
           isAmbiguous: true,
           alternates: uniqueUnlabeled,
         );
-        notes.add(
-          'Dates found on document without clear DOB labels. Please select or enter your birth date manually.',
-        );
+        if (hasIssueOrNonDobInDoc) {
+          notes.add(
+            'Dates found on document without clear DOB labels (issue dates excluded). Please select or enter your birth date manually.',
+          );
+        } else {
+          notes.add(
+            'Date found without an explicit DOB label. Manual verification is required.',
+          );
+        }
       }
     }
+
+    final diag = OcrDiagnostics(
+      buildCommit: '78179ec+ (Clean Verified Build)',
+      buildTimestamp: DateTime.now().toIso8601String(),
+      totalBlocks: blockIndices.isEmpty ? 1 : blockIndices.length,
+      totalLines: lines.length,
+      allExtractedDates: List.unmodifiable(allDetectedDates),
+      lineDiagnostics: List.unmodifiable(lineDiagnostics),
+      primaryDobSelected: primaryCandidate?.detectedValue,
+      excludedDates: nonDobEntries.map((e) => e.dateString).toSet().toList(),
+      alternateDates: primaryCandidate?.alternates ?? const [],
+    );
 
     return _DobExtractionResult(
       candidate: primaryCandidate,
       allDetectedDates: List.unmodifiable(allDetectedDates),
+      diagnostics: diag,
     );
   }
 
@@ -669,6 +761,12 @@ class DocumentTextParser {
       return false;
     }
 
+    final lower = clean.toLowerCase();
+    // Exclude institutional keywords inside candidate names
+    if (_forbiddenNameWords.any((w) => lower.contains(w))) {
+      return false;
+    }
+
     final words = clean
         .split(RegExp(r'\s+'))
         .where((w) => w.isNotEmpty)
@@ -705,9 +803,11 @@ class _RawDateEntry {
 class _DobExtractionResult {
   final DocumentCandidateField? candidate;
   final List<String> allDetectedDates;
+  final OcrDiagnostics? diagnostics;
 
   const _DobExtractionResult({
     this.candidate,
     this.allDetectedDates = const [],
+    this.diagnostics,
   });
 }

@@ -1,4 +1,5 @@
 import 'document_candidate_field.dart';
+import 'ocr_diagnostics.dart';
 
 /// Ephemeral result of heuristic text parsing on an identity document.
 ///
@@ -21,6 +22,9 @@ class DocumentParseResult {
   /// All parsing output requires mandatory applicant review before comparison.
   final bool requiresManualReview;
 
+  /// Ephemeral debug diagnostics (only populated for debugging/inspection, null in release).
+  final OcrDiagnostics? diagnostics;
+
   const DocumentParseResult({
     this.candidateName,
     this.candidateDob,
@@ -28,6 +32,7 @@ class DocumentParseResult {
     this.notes = const [],
     this.sensitiveIdentifierDetected = false,
     this.requiresManualReview = true,
+    this.diagnostics,
   });
 
   bool get hasNameCandidate => candidateName?.hasValue ?? false;

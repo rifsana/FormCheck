@@ -77,7 +77,7 @@ void main() {
           ),
           const ExtractedTextLine(
             lineNumber: 5,
-            text: '22/04/1992',
+            text: 'DOB: 22/04/1992',
             confidence: null,
           ),
           const ExtractedTextLine(
@@ -425,6 +425,71 @@ void main() {
       expect(result.candidateDob?.isAmbiguous, isTrue);
       expect(result.candidateDob?.alternates, contains('12/03/2019'));
       expect(result.candidateDob?.alternates, contains('15/08/1995'));
+    });
+
+    test('Filters institutional headings like Unique Identification Authority of India from alternate name suggestions', () {
+      final lines = [
+        const ExtractedTextLine(
+          lineNumber: 1,
+          text: 'GOVERNMENT OF INDIA',
+          confidence: null,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 2,
+          text: 'Unique Identification Authority of India',
+          confidence: null,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 3,
+          text: 'Unique Identification Authority',
+          confidence: null,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 4,
+          text: 'Rifsana Iqbal',
+          confidence: null,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 5,
+          text: 'DOB: 30/08/2005',
+          confidence: null,
+        ),
+      ];
+
+      final result = DocumentTextParser.parse(lines);
+      expect(result.hasNameCandidate, isTrue);
+      expect(result.candidateName?.detectedValue, equals('Rifsana Iqbal'));
+      expect(result.candidateName?.isAmbiguous, isFalse);
+      expect(
+        result.candidateName?.alternates.any(
+          (alt) =>
+              alt.toLowerCase().contains('unique identification') ||
+              alt.toLowerCase().contains('authority of india'),
+        ),
+        isFalse,
+      );
+    });
+
+    test('Single unlabelled date is NOT automatically prefilled as DOB', () {
+      final lines = [
+        const ExtractedTextLine(
+          lineNumber: 1,
+          text: 'Priya Sharma',
+          confidence: null,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 2,
+          text: '22/04/1992', // Single unlabelled date
+          confidence: null,
+        ),
+      ];
+
+      final result = DocumentTextParser.parse(lines);
+      // Must not be silently prefilled
+      expect(result.hasDobCandidate, isFalse);
+      expect(result.candidateDob?.detectedValue, isNull);
+      expect(result.candidateDob?.isAmbiguous, isTrue);
+      expect(result.candidateDob?.alternates, contains('22/04/1992'));
     });
 
     test('A document containing only an issue date and no DOB', () {

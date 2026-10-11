@@ -1,4 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../domain/ocr_diagnostics.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -688,6 +692,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           ),
           child: const Text('Choose different image'),
         ),
+
+        // Ephemeral in-app debug diagnostics (available in debug builds only)
+        if (kDebugMode && state.diagnostics != null) ...[
+          const SizedBox(height: 24),
+          _buildDebugDiagnosticSection(state.diagnostics!, isDark),
+        ],
       ],
     );
   }
@@ -931,6 +941,210 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
         ),
       ],
+    );
+  }
+
+  Widget _buildDebugDiagnosticSection(OcrDiagnostics diag, bool isDark) {
+    return Material(
+      color: isDark ? const Color(0xFF16181D) : const Color(0xFFF0F2F5),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF333842) : const Color(0xFFD0D5DD),
+        ),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: false,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          leading: Icon(
+            Icons.bug_report_outlined,
+            size: 20,
+            color: isDark ? Colors.amber[300] : Colors.amber[800],
+          ),
+          title: Text(
+            'OCR Diagnostics (Debug only)',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
+            ),
+          ),
+          subtitle: Text(
+            'Build: ${diag.buildCommit}',
+            style: TextStyle(
+              fontSize: 11,
+              fontFamily: 'monospace',
+              color: isDark
+                  ? AppColors.textMutedDark
+                  : AppColors.textMutedLight,
+            ),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 1),
+                  const SizedBox(height: 10),
+                  // Summary Badges
+                  Row(
+                    children: [
+                      _buildDiagBadge('Blocks: ${diag.totalBlocks}', isDark),
+                      const SizedBox(width: 8),
+                      _buildDiagBadge('Lines: ${diag.totalLines}', isDark),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  _buildDiagRow(
+                    'Dates Found by OCR',
+                    diag.allExtractedDates.isEmpty
+                        ? 'None'
+                        : diag.allExtractedDates.join(', '),
+                    isDark,
+                  ),
+                  _buildDiagRow(
+                    'Primary DOB Selected',
+                    diag.primaryDobSelected ?? '(None — Field left empty)',
+                    isDark,
+                  ),
+                  _buildDiagRow(
+                    'Excluded Dates (Issue/Validity)',
+                    diag.excludedDates.isEmpty
+                        ? 'None'
+                        : diag.excludedDates.join(', '),
+                    isDark,
+                  ),
+                  _buildDiagRow(
+                    'Alternate Candidates',
+                    diag.alternateDates.isEmpty
+                        ? 'None'
+                        : diag.alternateDates.join(', '),
+                    isDark,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Redacted Line-by-Line Structure:',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    constraints: const BoxConstraints(maxHeight: 180),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF0F1012)
+                          : const Color(0xFFE4E7EC),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: diag.lineDiagnostics.length,
+                      itemBuilder: (ctx, idx) {
+                        final ld = diag.lineDiagnostics[idx];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Text(
+                            'L${ld.lineNumber} [B${ld.blockIndex ?? '-'}] | ${ld.category}'
+                            '${ld.classification != null ? ' -> ${ld.classification}' : ''}',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontFamily: 'monospace',
+                              color: isDark
+                                  ? const Color(0xFFD0D5DD)
+                                  : const Color(0xFF344054),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Privacy note: No personal names, numbers, or unredacted text are logged or displayed.',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontStyle: FontStyle.italic,
+                      color: isDark
+                          ? AppColors.textMutedDark
+                          : AppColors.textMutedLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDiagBadge(String text, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF262A33) : const Color(0xFFD8DCE2),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'monospace',
+          color: isDark
+              ? AppColors.textPrimaryDark
+              : AppColors.textPrimaryLight,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDiagRow(String label, String value, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? AppColors.textMutedDark
+                    : AppColors.textMutedLight,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.w500,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
