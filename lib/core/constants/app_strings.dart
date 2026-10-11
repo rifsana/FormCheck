@@ -9,20 +9,20 @@ class AppStrings {
       'Know what you need. Catch possible mismatches. Apply with confidence.';
   static const String welcomeCta = 'Check my documents';
   static const String welcomeScopeCaption =
-      'For first-time adult applicants · Normal scheme.';
+      'For first-time adult applicants · Normal scheme';
   static const String welcomeConciseDisclaimer =
       'FormCheck is an independent preparation assistant, not a government service.';
 
-  // Benefit Rows
-  static const String benefit1Title = 'Verified requirements';
+  // Benefit Rows - Plain language
+  static const String benefit1Title = 'Verified checklist';
   static const String benefit1Desc =
-      'Based on official Passport Seva guidance.';
+      'Mapped strictly to official Passport Seva rules.';
   static const String benefit2Title = 'Document checks';
   static const String benefit2Desc =
-      'Spot possible differences in names and dates.';
-  static const String benefit3Title = 'Privacy first';
+      'Spot differences in spelling, names, and dates.';
+  static const String benefit3Title = 'Private by design';
   static const String benefit3Desc =
-      'Documents are processed on-device where supported.';
+      'Your document details stay on your phone.';
 
   // Legal / Full Disclaimer
   static const String independentNoticeTitle = 'Independent Preparation Notice';

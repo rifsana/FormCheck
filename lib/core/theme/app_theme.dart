@@ -2,6 +2,20 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
+/// Centralized Corner Radius Scale:
+/// - badge (8dp): small tags, condition indicators, code badges
+/// - card (16dp): grouped content sections, document cards, dialogs
+/// - option (14dp): selectable list tiles and option items
+/// - button (26dp): softly rounded, oval-like primary and action buttons
+/// - toggle (22dp): status toggle pills and interactive chips
+class AppRadius {
+  static const double badge = 8.0;
+  static const double option = 14.0;
+  static const double card = 16.0;
+  static const double toggle = 22.0;
+  static const double button = 26.0;
+}
+
 class AppTheme {
   static ThemeData get lightTheme {
     final colorScheme = ColorScheme(
@@ -47,7 +61,7 @@ class AppTheme {
         color: AppColors.surfaceLight,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           side: const BorderSide(color: AppColors.borderLight, width: 1),
         ),
         margin: EdgeInsets.zero,
@@ -58,7 +72,7 @@ class AppTheme {
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 50),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
           elevation: 0,
           textStyle: const TextStyle(
@@ -74,7 +88,7 @@ class AppTheme {
           minimumSize: const Size(double.infinity, 48),
           side: const BorderSide(color: AppColors.borderLight, width: 1),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
           textStyle: const TextStyle(
             fontSize: 14.5,
@@ -167,7 +181,7 @@ class AppTheme {
         color: AppColors.surfaceDark,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           side: const BorderSide(color: AppColors.borderDark, width: 1),
         ),
         margin: EdgeInsets.zero,
@@ -178,7 +192,7 @@ class AppTheme {
           foregroundColor: AppColors.backgroundDark,
           minimumSize: const Size(double.infinity, 50),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
           elevation: 0,
           textStyle: const TextStyle(
@@ -194,7 +208,7 @@ class AppTheme {
           minimumSize: const Size(double.infinity, 48),
           side: const BorderSide(color: AppColors.borderDark, width: 1),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
           textStyle: const TextStyle(
             fontSize: 14.5,

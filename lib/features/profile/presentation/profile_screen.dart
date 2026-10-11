@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/official_sources.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../domain/applicant_profile.dart';
 import 'profile_controller.dart';
 
@@ -42,6 +43,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
         title: const Text('Unsupported Category'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -106,7 +110,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Applicant Profile'),
+        title: const Text('About you'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(2),
           child: LinearProgressIndicator(
@@ -149,22 +153,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                     if (_currentStep == 0) ...[
                       Text(
-                        'Application Scope',
+                        'Your application',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'FormCheck supports first-time adult ordinary passport applications under the Normal scheme.',
+                        'FormCheck is designed for first-time adult applicants applying under the normal scheme.',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 20),
 
                       _SectionGroup(
-                        title: 'Application Type',
+                        title: 'Application type',
                         children: [
                           _SelectableTile(
-                            title: 'Fresh Passport (First-time)',
-                            subtitle: 'You have never held an ordinary Indian passport',
+                            title: 'Fresh passport (First-time)',
+                            subtitle: 'You have never held an ordinary Indian passport before',
                             selected:
                                 profile.applicationType ==
                                 ApplicationType.fresh,
@@ -174,8 +178,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: 'Re-issue of Passport',
-                            subtitle: 'Renewal, validity expired, pages exhausted, or lost',
+                            title: 'Re-issue of passport',
+                            subtitle: 'Renewing, replacing an expired passport, or pages full',
                             selected:
                                 profile.applicationType ==
                                 ApplicationType.reissue,
@@ -189,11 +193,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const SizedBox(height: 18),
 
                       _SectionGroup(
-                        title: 'Application Scheme',
+                        title: 'Processing scheme',
                         children: [
                           _SelectableTile(
-                            title: 'Normal Scheme',
-                            subtitle: 'Standard processing schedule and routine appointment',
+                            title: 'Normal scheme',
+                            subtitle:
+                                'Standard processing and routine appointment',
                             selected: profile.scheme == PassportScheme.normal,
                             onTap: () => ref
                                 .read(profileProvider.notifier)
@@ -201,8 +206,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: 'Tatkaal Scheme',
-                            subtitle: 'Urgent processing with Annexure F verification',
+                            title: 'Tatkaal scheme',
+                            subtitle: 'Urgent processing requiring emergency verification',
                             selected: profile.scheme == PassportScheme.tatkaal,
                             onTap: () => ref
                                 .read(profileProvider.notifier)
@@ -214,10 +219,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const SizedBox(height: 18),
 
                       _SectionGroup(
-                        title: 'Applicant Age',
+                        title: 'Your age',
                         children: [
                           _SelectableTile(
-                            title: 'Adult (18 years of age or older)',
+                            title: 'Adult (18 or older)',
                             selected:
                                 profile.ageCategory == AgeCategory.adult18Plus,
                             onTap: () => ref
@@ -226,7 +231,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: 'Minor (Under 18 years of age)',
+                            title: 'Under 18 (Minor)',
                             selected:
                                 profile.ageCategory == AgeCategory.minorUnder18,
                             onTap: () => ref
@@ -238,22 +243,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ] else if (_currentStep == 1) ...[
                       Text(
-                        'Non-ECR Eligibility',
+                        'Emigration status (Non-ECR)',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Emigration Check Not Required (Non-ECR) status allows overseas travel without emigration clearance. Select which verified category applies to you:',
+                        'Non-ECR means you do not need emigration clearance when traveling abroad for work. If you passed 10th grade, pay income taxes, or are 50+, you qualify. Select what applies:',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 20),
 
                       _SectionGroup(
-                        title: 'Verified Category Criteria',
+                        title: 'Select what applies to you',
                         children: [
                           _SelectableTile(
-                            title: '10th Standard (Matriculation) or Higher',
-                            subtitle: 'Holds 10th pass certificate, 12th, degree, or post-graduation',
+                            title: '10th grade (Matriculation) or higher',
+                            subtitle: 'Holds a 10th pass, 12th, degree, or post-graduation certificate',
                             selected:
                                 profile.nonEcrCriterion ==
                                 NonEcrCriterion.matriculationOrAbove,
@@ -265,8 +270,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: 'Income Tax Payer',
-                            subtitle: 'Filed individual income tax return for the last assessment year',
+                            title: 'Income tax payer',
+                            subtitle: 'Filed an individual income tax return in the past year',
                             selected:
                                 profile.nonEcrCriterion ==
                                 NonEcrCriterion.incomeTaxPayer,
@@ -278,8 +283,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: '50 Years of Age or Older',
-                            subtitle: 'All individuals aged 50+ qualify for Non-ECR automatically',
+                            title: '50 years of age or older',
+                            subtitle: 'Anyone aged 50 and above qualifies automatically',
                             selected:
                                 profile.nonEcrCriterion ==
                                 NonEcrCriterion.age50Plus,
@@ -291,7 +296,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: 'Gazetted Government Servant / PSU',
+                            title: 'Gazetted government servant / PSU',
                             subtitle: 'Gazetted officers or immediate dependent family members',
                             selected:
                                 profile.nonEcrCriterion ==
@@ -304,8 +309,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: '2-Year NCVT/SCVT Vocational Diploma',
-                            subtitle: 'Completed recognized 2-year vocational trade diploma',
+                            title: '2-year vocational diploma',
+                            subtitle: 'Completed a recognized 2-year NCVT or SCVT trade diploma',
                             selected:
                                 profile.nonEcrCriterion ==
                                 NonEcrCriterion.vocationalDiploma2Year,
@@ -317,8 +322,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: 'Spouse of Non-ECR Eligible Person',
-                            subtitle: 'Spouse of an income tax payer, matriculate, or govt officer',
+                            title: 'Spouse of a qualified person',
+                            subtitle: 'Your spouse qualifies as a graduate, taxpayer, or govt officer',
                             selected:
                                 profile.nonEcrCriterion ==
                                 NonEcrCriterion.spouseOfEligiblePerson,
@@ -330,8 +335,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: 'None of the Above (ECR Status)',
-                            subtitle: 'Passport issued under ECR category; no educational proof required',
+                            title: 'None of these (ECR status)',
+                            subtitle: 'Your passport will have an ECR stamp; you do not need educational proof',
                             selected:
                                 profile.nonEcrCriterion == NonEcrCriterion.none,
                             onTap: () => ref
@@ -343,18 +348,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ] else ...[
                       Text(
-                        'Additional Conditions',
+                        'Name & history',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Identify conditions that alter document requirements.',
+                        'Let us know if your name has changed so we can include the right paperwork.',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 20),
 
                       _SectionGroup(
-                        title: 'Name & Identity History',
+                        title: 'Name change',
                         children: [
                           Material(
                             color: Colors.transparent,
@@ -371,7 +376,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 ),
                               ),
                               subtitle: Text(
-                                'Includes legal name change, spelling correction, or change of surname after marriage',
+                                'Includes marriage surname change, deed poll, or legal spelling update',
                                 style: TextStyle(
                                   fontSize: 12.5,
                                   color: isDark
@@ -395,7 +400,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           color: isDark
                               ? AppColors.surfaceSubtleDark
                               : AppColors.surfaceSubtleLight,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppRadius.option),
                           border: Border.all(
                             color: isDark
                                 ? AppColors.borderDark
@@ -415,7 +420,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'FormCheck evaluates requirement rules only. We do not collect or store sensitive numbers such as Aadhaar or PAN.',
+                                'FormCheck only works out which document rules apply to you. We never ask for or store sensitive numbers like Aadhaar or PAN.',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: isDark
@@ -507,7 +512,7 @@ class _SectionGroup extends StatelessWidget {
         Material(
           color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             side: BorderSide(
               color: isDark ? AppColors.borderDark : AppColors.borderLight,
             ),

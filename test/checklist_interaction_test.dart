@@ -47,7 +47,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Collected'), findsAtLeastNWidgets(1));
-    expect(find.text('1 of 3 prepared'), findsOneWidget);
+    expect(find.text('1 of 3 ready'), findsOneWidget);
   });
 
   testWidgets('Source link is tappable and renders link icon', (tester) async {

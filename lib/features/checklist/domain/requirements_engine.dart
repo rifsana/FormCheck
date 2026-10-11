@@ -12,7 +12,7 @@ class RequirementsEngine {
         requirements: const [],
         isNonEcrEligible: false,
         nonEcrStatusDescription:
-            'Application profile is outside supported MVP scope.',
+            'This application is outside the supported first-time adult scope.',
       );
     }
 
@@ -32,45 +32,43 @@ class RequirementsEngine {
     switch (profile.nonEcrCriterion) {
       case NonEcrCriterion.matriculationOrAbove:
         nonEcrEligible = true;
-        nonEcrDesc =
-            'Eligible for Non-ECR (10th Standard / Matriculation or higher)';
+        nonEcrDesc = 'Non-ECR qualified (10th standard or higher education)';
         resolved.add(VerifiedRequirementsData.nonEcrEducation);
         break;
 
       case NonEcrCriterion.incomeTaxPayer:
         nonEcrEligible = true;
-        nonEcrDesc = 'Eligible for Non-ECR (Individual Income Tax Payer)';
+        nonEcrDesc = 'Non-ECR qualified (Individual income tax payer)';
         resolved.add(VerifiedRequirementsData.nonEcrTaxPayer);
         break;
 
       case NonEcrCriterion.age50Plus:
         nonEcrEligible = true;
-        nonEcrDesc =
-            'Eligible for Non-ECR (Applicant is 50 years of age or older)';
+        nonEcrDesc = 'Non-ECR qualified (50 years of age or older)';
         resolved.add(VerifiedRequirementsData.nonEcrAge50);
         break;
 
       case NonEcrCriterion.govtServant:
         nonEcrEligible = true;
-        nonEcrDesc = 'Eligible for Non-ECR (Gazetted Government Servant)';
+        nonEcrDesc = 'Non-ECR qualified (Gazetted government servant)';
         resolved.add(VerifiedRequirementsData.nonEcrGovtServant);
         break;
 
       case NonEcrCriterion.vocationalDiploma2Year:
         nonEcrEligible = true;
-        nonEcrDesc = 'Eligible for Non-ECR (2-Year NCVT/SCVT Recognized Vocational Diploma)';
+        nonEcrDesc = 'Non-ECR qualified (2-year recognized vocational diploma)';
         resolved.add(VerifiedRequirementsData.nonEcrVocational);
         break;
 
       case NonEcrCriterion.spouseOfEligiblePerson:
         nonEcrEligible = true;
-        nonEcrDesc = 'Eligible for Non-ECR (Spouse of Non-ECR eligible person)';
+        nonEcrDesc = 'Non-ECR qualified (Spouse of a qualified person)';
         resolved.add(VerifiedRequirementsData.nonEcrSpouseEligible);
         break;
 
       case NonEcrCriterion.none:
         nonEcrEligible = false;
-        nonEcrDesc = 'ECR Category (Emigration Check Required). No educational or tax proof needed; passport will be stamped ECR.';
+        nonEcrDesc = 'ECR Category. You do not need educational or tax proof; your passport will be stamped ECR.';
         break;
     }
 

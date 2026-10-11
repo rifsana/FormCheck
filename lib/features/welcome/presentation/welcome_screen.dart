@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/official_sources.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -32,6 +33,9 @@ class WelcomeScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
         title: const Text('Legal Notice'),
         content: const Text(
           AppStrings.fullDisclaimerBody,
@@ -51,6 +55,9 @@ class WelcomeScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
         title: const Text('Privacy Architecture'),
         content: const SingleChildScrollView(
           child: Column(
@@ -59,7 +66,7 @@ class WelcomeScreen extends StatelessWidget {
             children: [
               Text(
                 '• Zero Cloud Uploads: Document information is never transmitted to remote servers.\n\n'
-                '• Local Processing Architecture: On-device OCR processing executes entirely on your smartphone when scanning documents.\n\n'
+                '• Local Processing: On-device OCR processing executes entirely on your smartphone when scanning documents.\n\n'
                 '• No Remote Tracking: FormCheck contains no third-party analytics SDKs, trackers, or background telemetry.\n\n'
                 '• No Sensitive Identifiers: FormCheck does not ask for or collect sensitive numbers like Aadhaar or PAN.',
                 style: TextStyle(fontSize: 13.5, height: 1.45),
@@ -93,7 +100,7 @@ class WelcomeScreen extends StatelessWidget {
                 color: isDark
                     ? AppColors.surfaceSubtleDark
                     : AppColors.surfaceSubtleLight,
-                borderRadius: BorderRadius.circular(7),
+                borderRadius: BorderRadius.circular(AppRadius.badge),
                 border: Border.all(
                   color: isDark ? AppColors.borderDark : AppColors.borderLight,
                 ),
@@ -140,17 +147,17 @@ class WelcomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Scope Pill
+              // Scope Pill (Oval badge)
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 4.5,
+                  horizontal: 10,
+                  vertical: 5,
                 ),
                 decoration: BoxDecoration(
                   color: isDark
                       ? AppColors.surfaceSubtleDark
                       : AppColors.surfaceSubtleLight,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.badge),
                   border: Border.all(
                     color: isDark
                         ? AppColors.borderDark
@@ -188,13 +195,13 @@ class WelcomeScreen extends StatelessWidget {
 
               const SizedBox(height: 28),
 
-              // Notion/Apple Style Grouped Inset Section for 3 Benefits
+              // Grouped Section for 3 Benefits (moderately rounded card)
               Container(
                 decoration: BoxDecoration(
                   color: isDark
                       ? AppColors.surfaceDark
                       : AppColors.surfaceLight,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
                     color: isDark
                         ? AppColors.borderDark
@@ -232,7 +239,7 @@ class WelcomeScreen extends StatelessWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () => _showDisclaimerDialog(context),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.option),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -242,7 +249,7 @@ class WelcomeScreen extends StatelessWidget {
                       color: isDark
                           ? AppColors.surfaceSubtleDark
                           : AppColors.surfaceSubtleLight,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppRadius.option),
                       border: Border.all(
                         color: isDark
                             ? AppColors.borderDark
@@ -287,7 +294,7 @@ class WelcomeScreen extends StatelessWidget {
 
               const SizedBox(height: 28),
 
-              // Prominent Action Button
+              // Prominent Action Button (Softly rounded oval pill)
               ElevatedButton.icon(
                 key: const Key('check_documents_button'),
                 onPressed: () => context.push('/profile'),

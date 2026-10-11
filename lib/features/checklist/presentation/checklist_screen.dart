@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/official_sources.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../domain/passport_rule.dart';
 import 'checklist_controller.dart';
 
@@ -84,7 +85,7 @@ class ChecklistScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Document Checklist'),
+        title: const Text('Your document checklist'),
         actions: [
           IconButton(
             key: const Key('official_advisor_appbar_action'),
@@ -109,7 +110,7 @@ class ChecklistScreen extends ConsumerWidget {
                   color: isDark
                       ? AppColors.surfaceDark
                       : AppColors.surfaceLight,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   border: Border.all(
                     color: isDark
                         ? AppColors.borderDark
@@ -123,7 +124,7 @@ class ChecklistScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '$collectedCount of $totalActionable prepared',
+                          '$collectedCount of $totalActionable ready',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -146,7 +147,9 @@ class ChecklistScreen extends ConsumerWidget {
                                 : (isDark
                                       ? AppColors.noticeBgDark
                                       : AppColors.noticeBgLight),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.badge,
+                            ),
                             border: Border.all(
                               color: resolution.isNonEcrEligible
                                   ? (isDark
@@ -210,7 +213,7 @@ class ChecklistScreen extends ConsumerWidget {
 
               const SizedBox(height: 12),
 
-              // Restrained, Minimal Progress Disclaimer
+              // Restrained, Plain-language Progress Disclaimer
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -220,7 +223,7 @@ class ChecklistScreen extends ConsumerWidget {
                   color: isDark
                       ? AppColors.surfaceSubtleDark
                       : AppColors.surfaceSubtleLight,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.badge),
                 ),
                 child: Row(
                   children: [
@@ -234,7 +237,7 @@ class ChecklistScreen extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Marking items "Collected" records personal preparation only, not legal verification.',
+                        'Marking items "Collected" helps you track your preparation. It is not an official verification.',
                         style: TextStyle(
                           fontSize: 11.5,
                           color: isDark
@@ -251,7 +254,7 @@ class ChecklistScreen extends ConsumerWidget {
 
               // SECTION 1: Mandatory Requirements
               Text(
-                'MANDATORY DOCUMENTS',
+                'DOCUMENTS EVERYONE NEEDS',
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
@@ -278,7 +281,7 @@ class ChecklistScreen extends ConsumerWidget {
               if (resolution.conditionalRequirements.isNotEmpty) ...[
                 const SizedBox(height: 20),
                 Text(
-                  'CONDITIONAL REQUIREMENTS',
+                  'EXTRA DOCUMENTS YOU MAY NEED',
                   style: TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
@@ -305,7 +308,7 @@ class ChecklistScreen extends ConsumerWidget {
               // SECTION 3: PSK In-Person Guidance
               const SizedBox(height: 20),
               Text(
-                'APPOINTMENT PREPARATION GUIDELINES',
+                'WHAT TO BRING TO YOUR APPOINTMENT',
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
@@ -372,7 +375,7 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
           color: isDark ? AppColors.borderDark : AppColors.borderLight,
         ),
@@ -380,7 +383,7 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row: Title, Description, and Restrained Status Toggle
+          // Header Row: Title, Description, and Softly Rounded Status Toggle Pill
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
             child: Row(
@@ -417,13 +420,13 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
                 ),
                 const SizedBox(width: 12),
 
-                // Apple/Notion Style Restrained Status Toggle Pill (Accessible 48dp touch target)
+                // Softly rounded oval status toggle pill (AppRadius.toggle)
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
                     key: Key('toggle_status_${widget.requirement.id}'),
                     onTap: widget.onToggle,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.toggle),
                     child: Container(
                       constraints: const BoxConstraints(
                         minHeight: 36,
@@ -441,7 +444,7 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
                             : (isDark
                                   ? AppColors.surfaceSubtleDark
                                   : AppColors.surfaceSubtleLight),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(AppRadius.toggle),
                         border: Border.all(
                           color: isCollected
                               ? (isDark
@@ -502,7 +505,7 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
                   color: isDark
                       ? AppColors.surfaceSubtleDark
                       : AppColors.surfaceSubtleLight,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.badge),
                 ),
                 child: Text(
                   widget.requirement.applicabilityCondition!,
@@ -523,7 +526,7 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
                 : AppColors.borderSubtleLight,
           ),
 
-          // Evidence Expander Bar (With 48dp touch target and clear key)
+          // Evidence Expander Bar (Accessible 48dp target)
           Material(
             color: Colors.transparent,
             child: InkWell(
@@ -548,7 +551,7 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '${widget.requirement.acceptedEvidence.length} accepted evidence options',
+                        'Documents you can use (${widget.requirement.acceptedEvidence.length} options)',
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
@@ -573,7 +576,7 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
             ),
           ),
 
-          // Expanded Evidence List (Notion bulleted hierarchy with standard Text widgets)
+          // Expanded Evidence List (Notion bulleted hierarchy with clean readable text)
           if (_expanded) ...[
             Divider(
               height: 1,
@@ -644,15 +647,15 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
                 : AppColors.borderSubtleLight,
           ),
 
-          // Working Official Source Link Strip (Generous clickable area)
+          // Official Source Link Strip (Generous clickable area)
           Material(
             color: Colors.transparent,
             child: InkWell(
               key: Key('source_link_${widget.requirement.id}'),
               onTap: widget.onOpenSource,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(14),
-                bottomRight: Radius.circular(14),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(AppRadius.card),
+                bottomRight: Radius.circular(AppRadius.card),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -663,7 +666,7 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
                   children: [
                     Expanded(
                       child: Text(
-                        'Source: ${widget.requirement.source.title} (${widget.requirement.source.verifiedDate})',
+                        'Official source: ${widget.requirement.source.title} (${widget.requirement.source.verifiedDate})',
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark
@@ -709,7 +712,7 @@ class _GuidanceRowCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
           color: isDark ? AppColors.borderDark : AppColors.borderLight,
         ),
@@ -793,9 +796,9 @@ class _GuidanceRowCard extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               onTap: onOpenSource,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(14),
-                bottomRight: Radius.circular(14),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(AppRadius.card),
+                bottomRight: Radius.circular(AppRadius.card),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -806,7 +809,7 @@ class _GuidanceRowCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        'Source: ${requirement.source.title} (${requirement.source.verifiedDate})',
+                        'Official source: ${requirement.source.title} (${requirement.source.verifiedDate})',
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark

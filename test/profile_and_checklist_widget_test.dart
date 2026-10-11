@@ -13,8 +13,9 @@ void main() {
     );
 
     // Step 1: Scope
+    expect(find.text('About you'), findsOneWidget);
     expect(find.text('STEP 1 OF 3'), findsOneWidget);
-    expect(find.text('Application Scope'), findsOneWidget);
+    expect(find.text('Your application'), findsOneWidget);
 
     // Advance to Step 2
     await tester.tap(find.byKey(const Key('profile_continue_button')));
@@ -22,7 +23,7 @@ void main() {
 
     // Step 2: Non-ECR
     expect(find.text('STEP 2 OF 3'), findsOneWidget);
-    expect(find.text('Non-ECR Eligibility'), findsOneWidget);
+    expect(find.text('Emigration status (Non-ECR)'), findsOneWidget);
 
     // Advance to Step 3
     await tester.tap(find.byKey(const Key('profile_continue_button')));
@@ -30,7 +31,7 @@ void main() {
 
     // Step 3: Additional details
     expect(find.text('STEP 3 OF 3'), findsOneWidget);
-    expect(find.text('Additional Conditions'), findsOneWidget);
+    expect(find.text('Name & history'), findsOneWidget);
     expect(find.text('Generate Checklist'), findsOneWidget);
   });
 
@@ -41,10 +42,10 @@ void main() {
         const ProviderScope(child: MaterialApp(home: ChecklistScreen())),
       );
 
-      // Mandatory documents
-      expect(find.text('MANDATORY DOCUMENTS'), findsOneWidget);
-      expect(find.text('Proof of Date of Birth (DOB)'), findsOneWidget);
-      expect(find.text('Proof of Present Residential Address'), findsOneWidget);
+      // Mandatory documents section in plain language
+      expect(find.text('DOCUMENTS EVERYONE NEEDS'), findsOneWidget);
+      expect(find.text('Proof of your date of birth'), findsOneWidget);
+      expect(find.text('Proof of your current address'), findsOneWidget);
 
       // Toggle button exists
       expect(find.text('Pending'), findsAtLeastNWidgets(2));
