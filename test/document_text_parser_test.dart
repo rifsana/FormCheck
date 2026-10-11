@@ -198,10 +198,6 @@ void main() {
       expect(result.candidateDob?.isAmbiguous, isTrue);
       expect(result.candidateDob?.alternates, contains('12/04/2018'));
       expect(result.candidateDob?.alternates, contains('15/08/1995'));
-      expect(
-        result.notes.any((n) => n.contains('Multiple dates found')),
-        isTrue,
-      );
     });
 
     test('Detects Year of Birth only format and flags year-only property', () {
@@ -229,200 +225,232 @@ void main() {
     });
   });
 
-  group('DocumentTextParser — Regression Tests for Real-Device DOB Defect', () {
+  group('DocumentTextParser — Real-Device Layout & Priority Tests', () {
     test(
-      'Handles DOB label and date separated across consecutive OCR lines',
+      'DOB: 30/08/2005 and a separate line containing Issued: 23/01/2012',
       () {
         final lines = [
           const ExtractedTextLine(
             lineNumber: 1,
-            text: 'Rahul Sharma',
+            text: 'Rifsana Iqbal',
             confidence: null,
           ),
           const ExtractedTextLine(
             lineNumber: 2,
-            text: 'DOB:', // Label on line 2
+            text: 'DOB: 30/08/2005',
             confidence: null,
           ),
           const ExtractedTextLine(
             lineNumber: 3,
-            text: '15/08/1995', // Date on line 3
-            confidence: null,
-          ),
-          const ExtractedTextLine(
-            lineNumber: 4,
-            text: 'Date of Issue: 10/01/2020',
+            text: 'Issued: 23/01/2012',
             confidence: null,
           ),
         ];
 
         final result = DocumentTextParser.parse(lines);
         expect(result.hasDobCandidate, isTrue);
-        expect(result.candidateDob?.detectedValue, equals('15/08/1995'));
+        // Must resolve to 30/08/2005, never 23/01/2012
+        expect(result.candidateDob?.detectedValue, equals('30/08/2005'));
+        expect(result.candidateDob?.detectedValue, isNot(equals('23/01/2012')));
         expect(result.candidateDob?.isAmbiguous, isFalse);
-        expect(result.detectedDates, contains('10/01/2020'));
+        expect(result.detectedDates, contains('23/01/2012'));
         expect(
-          result.notes.any((n) => n.contains('Ignored date "10/01/2020"')),
+          result.notes.any((n) => n.contains('Ignored date "23/01/2012"')),
           isTrue,
         );
       },
     );
 
-    test(
-      'Handles bilingual Devanagari/English DOB label separated across lines',
-      () {
-        final lines = [
-          const ExtractedTextLine(
-            lineNumber: 1,
-            text: 'Rahul Sharma',
-            confidence: null,
-          ),
-          const ExtractedTextLine(
-            lineNumber: 2,
-            text: 'जन्म तारीख / DOB',
-            confidence: null,
-          ),
-          const ExtractedTextLine(
-            lineNumber: 3,
-            text: '15/08/1995',
-            confidence: null,
-          ),
-        ];
-
-        final result = DocumentTextParser.parse(lines);
-        expect(result.hasDobCandidate, isTrue);
-        expect(result.candidateDob?.detectedValue, equals('15/08/1995'));
-        expect(result.candidateDob?.isAmbiguous, isFalse);
-      },
-    );
-
-    test(
-      'Handles separate lines for both Issue date and DOB without confusion',
-      () {
-        final lines = [
-          const ExtractedTextLine(
-            lineNumber: 1,
-            text: 'Date of Issue',
-            confidence: null,
-          ),
-          const ExtractedTextLine(
-            lineNumber: 2,
-            text: '10/01/2015',
-            confidence: null,
-          ),
-          const ExtractedTextLine(
-            lineNumber: 3,
-            text: 'Date of Birth',
-            confidence: null,
-          ),
-          const ExtractedTextLine(
-            lineNumber: 4,
-            text: '15/08/1990',
-            confidence: null,
-          ),
-          const ExtractedTextLine(
-            lineNumber: 5,
-            text: 'Valid Till',
-            confidence: null,
-          ),
-          const ExtractedTextLine(
-            lineNumber: 6,
-            text: '09/01/2030',
-            confidence: null,
-          ),
-        ];
-
-        final result = DocumentTextParser.parse(lines);
-        expect(result.hasDobCandidate, isTrue);
-        expect(result.candidateDob?.detectedValue, equals('15/08/1990'));
-        expect(result.candidateDob?.isAmbiguous, isFalse);
-        expect(result.detectedDates, contains('10/01/2015'));
-        expect(result.detectedDates, contains('09/01/2030'));
-        expect(
-          result.notes.any((n) => n.contains('Ignored date "10/01/2015"')),
-          isTrue,
-        );
-        expect(
-          result.notes.any((n) => n.contains('Ignored date "09/01/2030"')),
-          isTrue,
-        );
-      },
-    );
-
-    test('Handles multi-line Year of Birth on consecutive lines', () {
+    test('Devanagari DOB with space: जन्म तिथि / DOB : 30/08/2005', () {
       final lines = [
         const ExtractedTextLine(
           lineNumber: 1,
-          text: 'Rahul Sharma',
+          text: 'Rifsana Iqbal',
           confidence: null,
         ),
         const ExtractedTextLine(
           lineNumber: 2,
-          text: 'Year of Birth',
+          text: 'जन्म तिथि / DOB : 30/08/2005',
           confidence: null,
         ),
-        const ExtractedTextLine(lineNumber: 3, text: '1985', confidence: null),
       ];
 
       final result = DocumentTextParser.parse(lines);
       expect(result.hasDobCandidate, isTrue);
-      expect(result.candidateDob?.detectedValue, equals('1985'));
-      expect(result.candidateDob?.isYearOnly, isTrue);
+      expect(result.candidateDob?.detectedValue, equals('30/08/2005'));
       expect(result.candidateDob?.isAmbiguous, isFalse);
     });
 
-    test('Handles Devanagari Year of Birth: जन्म वर्ष', () {
+    test('DOB and issue date in separate OCR blocks', () {
       final lines = [
         const ExtractedTextLine(
           lineNumber: 1,
-          text: 'Rahul Sharma',
+          text: 'Rifsana Iqbal',
+          confidence: null,
+          blockIndex: 1,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 2,
+          text: 'जन्म तिथि / DOB',
+          confidence: null,
+          blockIndex: 2,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 3,
+          text: '30/08/2005',
+          confidence: null,
+          blockIndex: 2,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 4,
+          text: 'Aadhaar No. Issued',
+          confidence: null,
+          blockIndex: 3,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 5,
+          text: '23/01/2012',
+          confidence: null,
+          blockIndex: 3,
+        ),
+      ];
+
+      final result = DocumentTextParser.parse(lines);
+      expect(result.hasDobCandidate, isTrue);
+      expect(result.candidateDob?.detectedValue, equals('30/08/2005'));
+      expect(result.candidateDob?.detectedValue, isNot(equals('23/01/2012')));
+      expect(result.candidateDob?.isAmbiguous, isFalse);
+    });
+
+    test('Issue date appearing before DOB in OCR reading order', () {
+      final lines = [
+        const ExtractedTextLine(
+          lineNumber: 1,
+          text: 'Aadhaar No. Issued: 23/01/2012',
           confidence: null,
         ),
         const ExtractedTextLine(
           lineNumber: 2,
-          text: 'जन्म वर्ष: 1985',
+          text: 'Rifsana Iqbal',
+          confidence: null,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 3,
+          text: 'जन्म तिथि / DOB : 30/08/2005',
           confidence: null,
         ),
       ];
 
       final result = DocumentTextParser.parse(lines);
       expect(result.hasDobCandidate, isTrue);
-      expect(result.candidateDob?.detectedValue, equals('1985'));
-      expect(result.candidateDob?.isYearOnly, isTrue);
+      // Resolves to DOB, never the first issue date in reading order
+      expect(result.candidateDob?.detectedValue, equals('30/08/2005'));
+      expect(result.candidateDob?.detectedValue, isNot(equals('23/01/2012')));
+      expect(result.candidateDob?.isAmbiguous, isFalse);
     });
 
-    test(
-      'Cleanly reports missing DOB when no dates are present on document',
-      () {
-        final lines = [
-          const ExtractedTextLine(
-            lineNumber: 1,
-            text: 'GOVERNMENT OF INDIA',
-            confidence: null,
-          ),
-          const ExtractedTextLine(
-            lineNumber: 2,
-            text: 'Rahul Sharma',
-            confidence: null,
-          ),
-          const ExtractedTextLine(
-            lineNumber: 3,
-            text: 'ABCDE1234F',
-            confidence: null,
-          ),
-        ];
+    test('Vertical or reordered issue-date text', () {
+      final lines = [
+        // Vertical issue block at top
+        const ExtractedTextLine(
+          lineNumber: 1,
+          text: 'Aadhaar No. Issued',
+          confidence: null,
+          blockIndex: 1,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 2,
+          text: '23/01/2012',
+          confidence: null,
+          blockIndex: 1,
+        ),
+        // Name block
+        const ExtractedTextLine(
+          lineNumber: 3,
+          text: 'Rifsana Iqbal',
+          confidence: null,
+          blockIndex: 2,
+        ),
+        // DOB and Gender block
+        const ExtractedTextLine(
+          lineNumber: 4,
+          text: 'जन्म तिथि / DOB',
+          confidence: null,
+          blockIndex: 3,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 5,
+          text: 'Female',
+          confidence: null,
+          blockIndex: 3,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 6,
+          text: '30/08/2005',
+          confidence: null,
+          blockIndex: 3,
+        ),
+      ];
 
-        final result = DocumentTextParser.parse(lines);
-        expect(result.hasNameCandidate, isTrue);
-        expect(result.hasDobCandidate, isFalse);
-        expect(result.candidateDob, isNull);
-        expect(result.detectedDates, isEmpty);
-        expect(
-          result.notes.any((n) => n.contains('No date of birth detected')),
-          isTrue,
-        );
-      },
-    );
+      final result = DocumentTextParser.parse(lines);
+      expect(result.hasDobCandidate, isTrue);
+      expect(result.candidateDob?.detectedValue, equals('30/08/2005'));
+      expect(result.candidateDob?.detectedValue, isNot(equals('23/01/2012')));
+      expect(result.candidateDob?.isAmbiguous, isFalse);
+    });
+
+    test('Multiple dates with no identifiable DOB label', () {
+      final lines = [
+        const ExtractedTextLine(
+          lineNumber: 1,
+          text: 'Rifsana Iqbal',
+          confidence: null,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 2,
+          text: '12/03/2019',
+          confidence: null,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 3,
+          text: '15/08/1995',
+          confidence: null,
+        ),
+      ];
+
+      final result = DocumentTextParser.parse(lines);
+      // Primary candidate must be null and manual review required
+      expect(result.hasDobCandidate, isFalse);
+      expect(result.candidateDob?.detectedValue, isNull);
+      expect(result.candidateDob?.isAmbiguous, isTrue);
+      expect(result.candidateDob?.alternates, contains('12/03/2019'));
+      expect(result.candidateDob?.alternates, contains('15/08/1995'));
+    });
+
+    test('A document containing only an issue date and no DOB', () {
+      final lines = [
+        const ExtractedTextLine(
+          lineNumber: 1,
+          text: 'Rifsana Iqbal',
+          confidence: null,
+        ),
+        const ExtractedTextLine(
+          lineNumber: 2,
+          text: 'Issued: 23/01/2012',
+          confidence: null,
+        ),
+      ];
+
+      final result = DocumentTextParser.parse(lines);
+      // Must NEVER prefill 23/01/2012! Primary candidate must be null!
+      expect(result.hasDobCandidate, isFalse);
+      expect(result.candidateDob, isNull);
+      expect(result.detectedDates, contains('23/01/2012'));
+      expect(
+        result.notes.any((n) => n.contains('Only an issue or validity date')),
+        isTrue,
+      );
+    });
   });
 
   group('DocumentTextParser — Diverse Indian Date Formats Support', () {

@@ -12,17 +12,21 @@ class ExtractedTextLine {
 
   final int lineNumber;
 
+  /// Optional OCR block index (1-based) grouping lines belonging to the same text block.
+  final int? blockIndex;
+
   const ExtractedTextLine({
     required this.text,
     this.confidence,
     required this.lineNumber,
+    this.blockIndex,
   });
 
   bool get hasConfidence => confidence != null;
 
   @override
   String toString() =>
-      'ExtractedTextLine(line: $lineNumber, text: "$text", conf: $confidence)';
+      'ExtractedTextLine(line: $lineNumber, block: $blockIndex, text: "$text", conf: $confidence)';
 }
 
 /// Abstract contract for on-device document text extraction.

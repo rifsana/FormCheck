@@ -58,13 +58,22 @@ class DocumentTextParser {
     'janm tareekh',
     'janm tarikh',
     'janmatithi',
-    'जन्म तारीख',
+    'जन्म तिथि',
+    'जन्म-तिथि',
     'जन्मतिथि',
+    'जन्म तारीख',
+    'जन्म-तारीख',
+    'जन्म वर्ष',
+    'जन्म-वर्ष',
     'जन्म',
+    'तिथि',
+    'तारीख',
+    'tareekh',
+    'tarikh',
+    'tithi',
     'year of birth',
     'yob',
     'birth year',
-    'जन्म वर्ष',
   ];
 
   static const List<String> _yearOnlyLabels = [
@@ -72,6 +81,7 @@ class DocumentTextParser {
     'yob',
     'birth year',
     'जन्म वर्ष',
+    'जन्म-वर्ष',
   ];
 
   static const List<String> _nonDobContextLabels = [
@@ -86,6 +96,11 @@ class DocumentTextParser {
     'doi',
     'issued',
     'issue',
+    'issuance',
+    'aadhaar no. issued',
+    'aadhaar no issued',
+    'no. issued',
+    'no issued',
     'expiry date',
     'date of expiry',
     'exp date',
@@ -99,6 +114,9 @@ class DocumentTextParser {
     'print date',
     'download date',
     'generation date',
+    'जारी',
+    'जारी करने की तिथि',
+    'जारी तिथि',
   ];
 
   static final RegExp _aadhaarRegex = RegExp(
@@ -181,7 +199,7 @@ class DocumentTextParser {
 
       // 2. Year of birth pattern: "Year of Birth: 1985"
       final yobMatch = RegExp(
-        r'(?:year\s+of\s+birth|yob|birth\s+year|जन्म\s*वर्ष)[\s\:\-]+(19\d{2}|20\d{2})\b',
+        r'(?:year\s+of\s+birth|yob|birth\s+year|जन्म\s*वर्ष|जन्म-वर्ष)[\s\:\-]+(19\d{2}|20\d{2})\b',
         caseSensitive: false,
       ).firstMatch(text);
       if (yobMatch != null) {
@@ -239,6 +257,7 @@ class DocumentTextParser {
       final i = entry.lineIndex;
       final lineText = entry.line.text.trim();
       final lineLower = lineText.toLowerCase();
+      final blk = entry.line.blockIndex;
 
       bool lineHasDob = _dobContextLabels.any((l) => lineLower.contains(l));
       bool lineHasNonDob = _nonDobContextLabels.any(
@@ -272,29 +291,63 @@ class DocumentTextParser {
         }
       }
 
-      // If current line has no label, check adjacent lines ONLY IF the adjacent line does not have its own date
-      // 1. Preceding line (i - 1)
-      if (!lineHasDob && !lineHasNonDob && i > 0) {
-        final prevHasDate = _findAllDatesInString(lines[i - 1].text).isNotEmpty;
-        if (!prevHasDate) {
-          final prevLower = lines[i - 1].text.trim().toLowerCase();
-          if (_dobContextLabels.any((l) => prevLower.contains(l))) {
+      // 1. Check same block lines (if OCR blockIndex is available)
+      if (!lineHasDob && !lineHasNonDob && blk != null) {
+        final sameBlockLines = lines.where(
+          (l) => l.blockIndex == blk && l.lineNumber != entry.line.lineNumber,
+        );
+        for (final bl in sameBlockLines) {
+          final blLower = bl.text.trim().toLowerCase();
+          if (_dobContextLabels.any((l) => blLower.contains(l))) {
             lineHasDob = true;
-          } else if (_nonDobContextLabels.any((l) => prevLower.contains(l))) {
+            break;
+          } else if (_nonDobContextLabels.any((l) => blLower.contains(l))) {
             lineHasNonDob = true;
+            break;
           }
         }
       }
 
-      // 2. Next line (i + 1)
-      if (!lineHasDob && !lineHasNonDob && i + 1 < lines.length) {
-        final nextHasDate = _findAllDatesInString(lines[i + 1].text).isNotEmpty;
-        if (!nextHasDate) {
-          final nextLower = lines[i + 1].text.trim().toLowerCase();
+      // 2. Check preceding lines (window of up to 3 lines backward)
+      if (!lineHasDob && !lineHasNonDob) {
+        for (int step = 1; step <= 3; step++) {
+          final prevIdx = i - step;
+          if (prevIdx < 0) break;
+          final prevLine = lines[prevIdx];
+          final prevDates = _findAllDatesInString(prevLine.text);
+
+          // If preceding line already contains a separate date, it cannot be a label for this date
+          if (prevDates.isNotEmpty) break;
+
+          final prevLower = prevLine.text.trim().toLowerCase();
+          if (_dobContextLabels.any((l) => prevLower.contains(l))) {
+            lineHasDob = true;
+            break;
+          } else if (_nonDobContextLabels.any((l) => prevLower.contains(l))) {
+            lineHasNonDob = true;
+            break;
+          }
+        }
+      }
+
+      // 3. Check following lines (window of up to 2 lines forward)
+      if (!lineHasDob && !lineHasNonDob) {
+        for (int step = 1; step <= 2; step++) {
+          final nextIdx = i + step;
+          if (nextIdx >= lines.length) break;
+          final nextLine = lines[nextIdx];
+          final nextDates = _findAllDatesInString(nextLine.text);
+
+          // If following line already contains a separate date, it cannot be a label for this date
+          if (nextDates.isNotEmpty) break;
+
+          final nextLower = nextLine.text.trim().toLowerCase();
           if (_dobContextLabels.any((l) => nextLower.contains(l))) {
             lineHasDob = true;
+            break;
           } else if (_nonDobContextLabels.any((l) => nextLower.contains(l))) {
             lineHasNonDob = true;
+            break;
           }
         }
       }
@@ -318,7 +371,7 @@ class DocumentTextParser {
     DocumentCandidateField? primaryCandidate;
 
     // Decision Logic:
-    // 1. Prefer explicitly labeled DOB candidates over unlabeled dates
+    // 1. Prefer explicitly labeled DOB candidates over unlabeled or issue dates
     if (dobCandidates.isNotEmpty) {
       final uniqueDob = dobCandidates.map((e) => e.dateString).toSet().toList();
       if (uniqueDob.length == 1) {
@@ -365,14 +418,21 @@ class DocumentTextParser {
           .map((e) => e.dateString)
           .toSet()
           .toList();
+      final bool hasIssueOrNonDobInDoc = nonDobEntries.isNotEmpty;
 
       if (uniqueUnlabeled.isEmpty) {
         primaryCandidate = null;
-        notes.add(
-          'No date of birth detected on document. Please enter your date of birth manually.',
-        );
-      } else if (uniqueUnlabeled.length == 1) {
-        // Standalone single date without label (e.g. PAN card)
+        if (hasIssueOrNonDobInDoc) {
+          notes.add(
+            'Only an issue or validity date was detected on document. Please enter your date of birth manually.',
+          );
+        } else {
+          notes.add(
+            'No date of birth detected on document. Please enter your date of birth manually.',
+          );
+        }
+      } else if (uniqueUnlabeled.length == 1 && !hasIssueOrNonDobInDoc) {
+        // Standalone single date on a document with NO issue/expiry context (e.g. PAN card)
         final single = unlabeledEntries.first;
         final isYearOnly =
             single.isYearOnly ||
@@ -394,7 +454,7 @@ class DocumentTextParser {
           );
         }
       } else {
-        // Multiple unlabeled dates: DO NOT select automatically when ambiguous!
+        // Multiple unlabeled dates or document had issue dates: DO NOT PREFILL ANY DATE!
         primaryCandidate = DocumentCandidateField(
           fieldType: ComparisonFieldType.dateOfBirth,
           detectedValue: null,
@@ -405,7 +465,7 @@ class DocumentTextParser {
           alternates: uniqueUnlabeled,
         );
         notes.add(
-          'Multiple dates found on document without clear DOB labels. Please select or enter the correct birth date manually.',
+          'Dates found on document without clear DOB labels. Please select or enter your birth date manually.',
         );
       }
     }
@@ -447,7 +507,10 @@ class DocumentTextParser {
           lower == 'female' ||
           lower == 'transgender' ||
           lower == 'purush' ||
-          lower == 'mahila') {
+          lower == 'mahila' ||
+          lower == 'पुरुष' ||
+          lower == 'महिला' ||
+          lower == 'स्त्री') {
         continue;
       }
 
@@ -587,7 +650,7 @@ class DocumentTextParser {
 
     // Year of birth pattern
     final yobMatch = RegExp(
-      r'(?:year\s+of\s+birth|yob|birth\s+year|जन्म\s*वर्ष)[\s\:\-]+(19\d{2}|20\d{2})\b',
+      r'(?:year\s+of\s+birth|yob|birth\s+year|जन्म\s*वर्ष|जन्म-वर्ष)[\s\:\-]+(19\d{2}|20\d{2})\b',
       caseSensitive: false,
     ).firstMatch(text);
     if (yobMatch != null) {

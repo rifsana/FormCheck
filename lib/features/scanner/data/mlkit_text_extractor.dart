@@ -38,6 +38,7 @@ class MlKitTextExtractor implements DocumentTextExtractor {
 
       final lines = <ExtractedTextLine>[];
       int lineIndex = 1;
+      int blockIndex = 1;
 
       for (final block in recognizedText.blocks) {
         for (final line in block.lines) {
@@ -49,10 +50,12 @@ class MlKitTextExtractor implements DocumentTextExtractor {
                 // ML Kit on-device Latin model does not provide calibrated line confidence
                 confidence: null,
                 lineNumber: lineIndex++,
+                blockIndex: blockIndex,
               ),
             );
           }
         }
+        blockIndex++;
       }
 
       return List.unmodifiable(lines);
