@@ -98,7 +98,7 @@ class DateParsingUtil {
 
     // 1. Check Year-Only formats (e.g. "1995" or "Year of Birth: 1985" or "YOB: 1990")
     final yobMatch = RegExp(
-      r'^(?:(?:year\s+of\s+birth|yob|birth\s+year)[\s\:\-]+)?(19\d{2}|20\d{2})$',
+      r'^(?:(?:year\s+of\s+birth|yob|birth\s+year|जन्म\s*वर्ष)[\s\:\-]+)?(19\d{2}|20\d{2})$',
       caseSensitive: false,
     ).firstMatch(text);
     if (yobMatch != null) {
@@ -109,8 +109,9 @@ class DateParsingUtil {
     }
 
     // 2. Numeric delimited formats: DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY
-    final dmyMatch = RegExp(r'^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$')
-        .firstMatch(text);
+    final dmyMatch = RegExp(
+      r'^(\d{1,2})\s*[\/\-\.]\s*(\d{1,2})\s*[\/\-\.]\s*(\d{4})$',
+    ).firstMatch(text);
     if (dmyMatch != null) {
       final day = int.parse(dmyMatch.group(1)!);
       final month = int.parse(dmyMatch.group(2)!);
@@ -126,8 +127,9 @@ class DateParsingUtil {
     }
 
     // 3. ISO / YYYY-MM-DD or YYYY/MM/DD formats
-    final ymdMatch = RegExp(r'^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$')
-        .firstMatch(text);
+    final ymdMatch = RegExp(
+      r'^(\d{4})\s*[\/\-\.]\s*(\d{1,2})\s*[\/\-\.]\s*(\d{1,2})$',
+    ).firstMatch(text);
     if (ymdMatch != null) {
       final year = int.parse(ymdMatch.group(1)!);
       final month = int.parse(ymdMatch.group(2)!);

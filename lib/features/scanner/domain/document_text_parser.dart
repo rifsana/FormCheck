@@ -49,13 +49,29 @@ class DocumentTextParser {
   static const List<String> _dobContextLabels = [
     'dob',
     'd.o.b',
+    'd.o.b.',
     'date of birth',
     'birth date',
+    'birth',
     'janm tithi',
     'janma tithi',
+    'janm tareekh',
+    'janm tarikh',
+    'janmatithi',
+    'जन्म तारीख',
+    'जन्मतिथि',
+    'जन्म',
     'year of birth',
     'yob',
     'birth year',
+    'जन्म वर्ष',
+  ];
+
+  static const List<String> _yearOnlyLabels = [
+    'year of birth',
+    'yob',
+    'birth year',
+    'जन्म वर्ष',
   ];
 
   static const List<String> _nonDobContextLabels = [
@@ -63,14 +79,26 @@ class DocumentTextParser {
     'valid upto',
     'valid through',
     'validity',
+    'valid from',
+    'valid to',
     'issue date',
     'date of issue',
     'doi',
-    'expiry',
-    'exp date',
+    'issued',
+    'issue',
+    'expiry date',
     'date of expiry',
+    'exp date',
+    'expiry',
     'registration date',
+    'date of reg',
+    'reg date',
+    'registration',
     'enrolment date',
+    'enrollment date',
+    'print date',
+    'download date',
+    'generation date',
   ];
 
   static final RegExp _aadhaarRegex = RegExp(
@@ -107,15 +135,15 @@ class DocumentTextParser {
     }
 
     // 1. Process Dates
-    final dobCandidate = _extractDobCandidate(lines, notes);
+    final dobResult = _extractDobCandidate(lines, notes);
 
     // 2. Process Names
     final nameCandidate = _extractNameCandidate(lines, notes);
 
     return DocumentParseResult(
       candidateName: nameCandidate,
-      candidateDob: dobCandidate.candidate,
-      detectedDates: dobCandidate.allDetectedDates,
+      candidateDob: dobResult.candidate,
+      detectedDates: dobResult.allDetectedDates,
       notes: notes,
       sensitiveIdentifierDetected: sensitiveIdentifierFound,
       requiresManualReview: true,
@@ -126,103 +154,265 @@ class DocumentTextParser {
     List<ExtractedTextLine> lines,
     List<String> notes,
   ) {
-    final allDates = <String>[];
-    DocumentCandidateField? primaryCandidate;
-    final alternateDobDates = <String>[];
+    final allDetectedDates = <String>[];
+    final rawEntries = <_RawDateEntry>[];
 
-    // Find all lines containing dates
-    for (final line in lines) {
+    for (int i = 0; i < lines.length; i++) {
+      final line = lines[i];
       final text = line.text.trim();
-      final lower = text.toLowerCase();
 
-      // Check if line contains non-DOB context (Issue, Expiry, Validity)
-      final hasNonDobContext = _nonDobContextLabels.any(
-        (l) => lower.contains(l),
-      );
-
-      // Check if line contains explicit DOB context
-      final hasDobContext = _dobContextLabels.any((l) => lower.contains(l));
-
-      // Extract date string
-      final extractedDate = _findDateInString(text);
-      if (extractedDate != null) {
-        if (!allDates.contains(extractedDate)) {
-          allDates.add(extractedDate);
+      // 1. Standard dates (numeric, textual month, spaced delimiters)
+      final datesOnLine = _findAllDatesInString(text);
+      for (final dateStr in datesOnLine) {
+        if (!allDetectedDates.contains(dateStr)) {
+          allDetectedDates.add(dateStr);
         }
+        rawEntries.add(
+          _RawDateEntry(
+            dateString: dateStr,
+            line: line,
+            lineIndex: i,
+            isYearOnly: false,
+            hasExplicitDob: false,
+            contextDescription: 'Found on line ${line.lineNumber}: "$text"',
+          ),
+        );
+      }
 
-        if (hasNonDobContext && !hasDobContext) {
-          notes.add(
-            'Ignored date "$extractedDate" because of issue/validity context: "$text".',
-          );
-          continue;
+      // 2. Year of birth pattern: "Year of Birth: 1985"
+      final yobMatch = RegExp(
+        r'(?:year\s+of\s+birth|yob|birth\s+year|जन्म\s*वर्ष)[\s\:\-]+(19\d{2}|20\d{2})\b',
+        caseSensitive: false,
+      ).firstMatch(text);
+      if (yobMatch != null) {
+        final yearStr = yobMatch.group(1)!;
+        if (!allDetectedDates.contains(yearStr)) {
+          allDetectedDates.add(yearStr);
         }
-
-        if (hasDobContext) {
-          final isYearOnly = DateParsingUtil.parseDate(extractedDate)
-              .isYearOnly;
-          if (primaryCandidate == null) {
-            primaryCandidate = DocumentCandidateField(
-              fieldType: ComparisonFieldType.dateOfBirth,
-              detectedValue: extractedDate,
-              confidence: line.confidence,
-              contextSource:
-                  'Found on line ${line.lineNumber} with DOB label: "$text"',
-              isAmbiguous: false,
-              isYearOnly: isYearOnly,
-            );
-          } else {
-            alternateDobDates.add(extractedDate);
+        rawEntries.add(
+          _RawDateEntry(
+            dateString: yearStr,
+            line: line,
+            lineIndex: i,
+            isYearOnly: true,
+            hasExplicitDob: true,
+            contextDescription:
+                'Found on line ${line.lineNumber} with Year of Birth label: "$text"',
+          ),
+        );
+      } else if (i > 0) {
+        // Multi-line year of birth: Line i-1 has "Year of Birth", Line i has "1985"
+        final pureYearMatch = RegExp(r'^\s*(19\d{2}|20\d{2})\s*$')
+            .firstMatch(text);
+        final prevLower = lines[i - 1].text.trim().toLowerCase();
+        if (pureYearMatch != null &&
+            _yearOnlyLabels.any((l) => prevLower.contains(l))) {
+          final yearStr = pureYearMatch.group(1)!;
+          if (!allDetectedDates.contains(yearStr)) {
+            allDetectedDates.add(yearStr);
           }
-        } else {
-          alternateDobDates.add(extractedDate);
+          rawEntries.add(
+            _RawDateEntry(
+              dateString: yearStr,
+              line: line,
+              lineIndex: i,
+              isYearOnly: true,
+              hasExplicitDob: true,
+              contextDescription:
+                  'Found on line ${line.lineNumber} with Year of Birth label on preceding line: "${lines[i - 1].text.trim()}"',
+            ),
+          );
         }
       }
     }
 
-    // If no explicit DOB-labeled date was found, check if there is an unlabeled date
-    if (primaryCandidate == null) {
-      if (alternateDobDates.length == 1) {
-        final singleDate = alternateDobDates.first;
-        final isYearOnly = DateParsingUtil.parseDate(singleDate).isYearOnly;
+    final dobCandidates = <_RawDateEntry>[];
+    final nonDobEntries = <_RawDateEntry>[];
+    final unlabeledEntries = <_RawDateEntry>[];
+
+    for (final entry in rawEntries) {
+      if (entry.hasExplicitDob) {
+        dobCandidates.add(entry);
+        continue;
+      }
+
+      final i = entry.lineIndex;
+      final lineText = entry.line.text.trim();
+      final lineLower = lineText.toLowerCase();
+
+      bool lineHasDob = _dobContextLabels.any((l) => lineLower.contains(l));
+      bool lineHasNonDob = _nonDobContextLabels.any(
+        (l) => lineLower.contains(l),
+      );
+
+      // Handle multiple dates/labels on the exact same line:
+      // Check which label appears most immediately prior to the date in the text
+      if (lineHasDob && lineHasNonDob) {
+        final dateIdx = lineText.indexOf(entry.dateString);
+        if (dateIdx != -1) {
+          final textBefore = lineLower.substring(0, dateIdx);
+          int lastDobIdx = -1;
+          for (final l in _dobContextLabels) {
+            final idx = textBefore.lastIndexOf(l);
+            if (idx > lastDobIdx) lastDobIdx = idx;
+          }
+          int lastNonDobIdx = -1;
+          for (final l in _nonDobContextLabels) {
+            final idx = textBefore.lastIndexOf(l);
+            if (idx > lastNonDobIdx) lastNonDobIdx = idx;
+          }
+
+          if (lastDobIdx > lastNonDobIdx && lastDobIdx != -1) {
+            lineHasDob = true;
+            lineHasNonDob = false;
+          } else if (lastNonDobIdx > lastDobIdx && lastNonDobIdx != -1) {
+            lineHasNonDob = true;
+            lineHasDob = false;
+          }
+        }
+      }
+
+      // If current line has no label, check adjacent lines ONLY IF the adjacent line does not have its own date
+      // 1. Preceding line (i - 1)
+      if (!lineHasDob && !lineHasNonDob && i > 0) {
+        final prevHasDate = _findAllDatesInString(lines[i - 1].text).isNotEmpty;
+        if (!prevHasDate) {
+          final prevLower = lines[i - 1].text.trim().toLowerCase();
+          if (_dobContextLabels.any((l) => prevLower.contains(l))) {
+            lineHasDob = true;
+          } else if (_nonDobContextLabels.any((l) => prevLower.contains(l))) {
+            lineHasNonDob = true;
+          }
+        }
+      }
+
+      // 2. Next line (i + 1)
+      if (!lineHasDob && !lineHasNonDob && i + 1 < lines.length) {
+        final nextHasDate = _findAllDatesInString(lines[i + 1].text).isNotEmpty;
+        if (!nextHasDate) {
+          final nextLower = lines[i + 1].text.trim().toLowerCase();
+          if (_dobContextLabels.any((l) => nextLower.contains(l))) {
+            lineHasDob = true;
+          } else if (_nonDobContextLabels.any((l) => nextLower.contains(l))) {
+            lineHasNonDob = true;
+          }
+        }
+      }
+
+      if (lineHasNonDob && !lineHasDob) {
+        nonDobEntries.add(entry);
+      } else if (lineHasDob && !lineHasNonDob) {
+        dobCandidates.add(entry);
+      } else {
+        unlabeledEntries.add(entry);
+      }
+    }
+
+    // Add notes for excluded dates
+    for (final entry in nonDobEntries) {
+      notes.add(
+        'Ignored date "${entry.dateString}" because of issue/validity context: "${entry.line.text.trim()}".',
+      );
+    }
+
+    DocumentCandidateField? primaryCandidate;
+
+    // Decision Logic:
+    // 1. Prefer explicitly labeled DOB candidates over unlabeled dates
+    if (dobCandidates.isNotEmpty) {
+      final uniqueDob = dobCandidates.map((e) => e.dateString).toSet().toList();
+      if (uniqueDob.length == 1) {
+        final chosen = dobCandidates.first;
+        // Collect other valid dates as alternates (excluding non-DOB issue/expiry dates)
+        final alternates = unlabeledEntries
+            .map((e) => e.dateString)
+            .where((d) => d != chosen.dateString)
+            .toSet()
+            .toList();
+
         primaryCandidate = DocumentCandidateField(
           fieldType: ComparisonFieldType.dateOfBirth,
-          detectedValue: singleDate,
+          detectedValue: chosen.dateString,
+          confidence: chosen.line.confidence,
+          contextSource: chosen.contextDescription,
+          isAmbiguous: false,
+          isYearOnly: chosen.isYearOnly,
+          alternates: alternates,
+        );
+
+        if (chosen.isYearOnly) {
+          notes.add(
+            'Year of birth (${chosen.dateString}) detected. Passport Seva requires a complete date of birth (DD/MM/YYYY).',
+          );
+        }
+      } else {
+        // Multiple conflicting dates labeled as DOB
+        primaryCandidate = DocumentCandidateField(
+          fieldType: ComparisonFieldType.dateOfBirth,
+          detectedValue: null,
           confidence: null,
+          contextSource: 'Multiple conflicting dates detected with DOB labels.',
+          isAmbiguous: true,
+          alternates: uniqueDob,
+        );
+        notes.add(
+          'Multiple conflicting dates found with DOB labels. Please select or enter your date of birth manually.',
+        );
+      }
+    } else {
+      // No explicit DOB label found
+      final uniqueUnlabeled = unlabeledEntries
+          .map((e) => e.dateString)
+          .toSet()
+          .toList();
+
+      if (uniqueUnlabeled.isEmpty) {
+        primaryCandidate = null;
+        notes.add(
+          'No date of birth detected on document. Please enter your date of birth manually.',
+        );
+      } else if (uniqueUnlabeled.length == 1) {
+        // Standalone single date without label (e.g. PAN card)
+        final single = unlabeledEntries.first;
+        final isYearOnly =
+            single.isYearOnly ||
+            DateParsingUtil.parseDate(single.dateString).isYearOnly;
+        primaryCandidate = DocumentCandidateField(
+          fieldType: ComparisonFieldType.dateOfBirth,
+          detectedValue: single.dateString,
+          confidence: single.line.confidence,
           contextSource: 'Standalone date found without explicit label.',
           isAmbiguous: true,
           isYearOnly: isYearOnly,
         );
         notes.add(
-          'Date "$singleDate" was detected without an explicit DOB label. Manual verification is required.',
+          'Date "${single.dateString}" was detected without an explicit DOB label. Manual verification is required.',
         );
-      } else if (alternateDobDates.length > 1) {
+        if (isYearOnly) {
+          notes.add(
+            'Year of birth (${single.dateString}) detected. Passport Seva requires a complete date of birth (DD/MM/YYYY).',
+          );
+        }
+      } else {
+        // Multiple unlabeled dates: DO NOT select automatically when ambiguous!
         primaryCandidate = DocumentCandidateField(
           fieldType: ComparisonFieldType.dateOfBirth,
-          detectedValue: alternateDobDates.first,
+          detectedValue: null,
           confidence: null,
-          contextSource: 'Multiple unlabeled dates found on document.',
+          contextSource:
+              'Multiple dates found on document without an explicit DOB label.',
           isAmbiguous: true,
-          alternates: alternateDobDates,
+          alternates: uniqueUnlabeled,
         );
         notes.add(
-          'Multiple dates found on document without clear DOB labels. Please select the correct birth date.',
+          'Multiple dates found on document without clear DOB labels. Please select or enter the correct birth date manually.',
         );
       }
-    } else if (alternateDobDates.isNotEmpty) {
-      primaryCandidate = DocumentCandidateField(
-        fieldType: primaryCandidate.fieldType,
-        detectedValue: primaryCandidate.detectedValue,
-        confidence: primaryCandidate.confidence,
-        contextSource: primaryCandidate.contextSource,
-        isAmbiguous: false,
-        isYearOnly: primaryCandidate.isYearOnly,
-        alternates: alternateDobDates,
-      );
     }
 
     return _DobExtractionResult(
       candidate: primaryCandidate,
-      allDetectedDates: List.unmodifiable(allDates),
+      allDetectedDates: List.unmodifiable(allDetectedDates),
     );
   }
 
@@ -341,32 +531,63 @@ class DocumentTextParser {
     );
   }
 
+  static List<String> _findAllDatesInString(String text) {
+    final results = <String>[];
+
+    // 1. Delimited numeric date: DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD (with optional spaces around separators)
+    final numMatches = RegExp(
+      r'\b(\d{1,2}\s*[\/\-\.]\s*\d{1,2}\s*[\/\-\.]\s*\d{4})\b|\b(\d{4}\s*[\/\-\.]\s*\d{1,2}\s*[\/\-\.]\s*\d{1,2})\b',
+    ).allMatches(text);
+    for (final m in numMatches) {
+      final dateStr = m.group(1) ?? m.group(2);
+      if (dateStr != null) {
+        final parsed = DateParsingUtil.parseDate(dateStr);
+        if (parsed.isSuccess && !results.contains(parsed.standardizedString)) {
+          results.add(parsed.standardizedString);
+        }
+      }
+    }
+
+    // 2. Textual month date: 15 Aug 1995, 15 August 1995, 15-Aug-1995
+    final textMonthMatches = RegExp(
+      r'\b(\d{1,2}\s*[\s\-\.\/]+\s*[a-zA-Z]+\s*[\s\-\.\/,]+\s*\d{4})\b',
+    ).allMatches(text);
+    for (final m in textMonthMatches) {
+      final dateStr = m.group(1);
+      if (dateStr != null) {
+        final parsed = DateParsingUtil.parseDate(dateStr);
+        if (parsed.isSuccess && !results.contains(parsed.standardizedString)) {
+          results.add(parsed.standardizedString);
+        }
+      }
+    }
+
+    // 3. Month name first: August 15, 1995 or Aug 15 1995
+    final monthFirstMatches = RegExp(
+      r'\b([a-zA-Z]+\s*[\s\-\.\/]+\s*\d{1,2}\s*[\s\-\.\/,]+\s*\d{4})\b',
+    ).allMatches(text);
+    for (final m in monthFirstMatches) {
+      final dateStr = m.group(1);
+      if (dateStr != null) {
+        final parsed = DateParsingUtil.parseDate(dateStr);
+        if (parsed.isSuccess && !results.contains(parsed.standardizedString)) {
+          results.add(parsed.standardizedString);
+        }
+      }
+    }
+
+    return results;
+  }
+
   static String? _findDateInString(String text) {
-    // 1. Delimited numeric date: DD/MM/YYYY or YYYY-MM-DD
-    final numMatch = RegExp(
-      r'\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})\b|\b(\d{4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2})\b',
-    ).firstMatch(text);
-    if (numMatch != null) {
-      final dateStr = numMatch.group(1) ?? numMatch.group(2);
-      if (dateStr != null && DateParsingUtil.parseDate(dateStr).isSuccess) {
-        return dateStr;
-      }
+    final dates = _findAllDatesInString(text);
+    if (dates.isNotEmpty) {
+      return dates.first;
     }
 
-    // 2. Textual month date: 15 Aug 1995 or 15 August 1995
-    final textMonthMatch = RegExp(
-      r'\b(\d{1,2}[\s\-\.\/]+[a-zA-Z]+[\s\-\.\/,]+\d{4})\b',
-    ).firstMatch(text);
-    if (textMonthMatch != null) {
-      final dateStr = textMonthMatch.group(1);
-      if (dateStr != null && DateParsingUtil.parseDate(dateStr).isSuccess) {
-        return dateStr;
-      }
-    }
-
-    // 3. Year of birth pattern: "Year of Birth: 1995" or "YOB: 1985"
+    // Year of birth pattern
     final yobMatch = RegExp(
-      r'\b(?:year\s+of\s+birth|yob|birth\s+year)[\s\:\\-]+(19\d{2}|20\d{2})\b',
+      r'(?:year\s+of\s+birth|yob|birth\s+year|जन्म\s*वर्ष)[\s\:\-]+(19\d{2}|20\d{2})\b',
       caseSensitive: false,
     ).firstMatch(text);
     if (yobMatch != null) {
@@ -398,6 +619,24 @@ class DocumentTextParser {
 
     return true;
   }
+}
+
+class _RawDateEntry {
+  final String dateString;
+  final ExtractedTextLine line;
+  final int lineIndex;
+  final bool isYearOnly;
+  final bool hasExplicitDob;
+  final String contextDescription;
+
+  _RawDateEntry({
+    required this.dateString,
+    required this.line,
+    required this.lineIndex,
+    required this.isYearOnly,
+    required this.hasExplicitDob,
+    required this.contextDescription,
+  });
 }
 
 class _DobExtractionResult {
