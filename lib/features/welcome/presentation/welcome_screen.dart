@@ -66,7 +66,7 @@ class WelcomeScreen extends StatelessWidget {
             children: [
               Text(
                 '• Zero Cloud Uploads: Document information is never transmitted to remote servers.\n\n'
-                '• Local Processing: On-device OCR processing executes entirely on your smartphone when scanning documents.\n\n'
+                '• Local Processing: All questionnaire inputs and checklist data are processed strictly on your smartphone.\n\n'
                 '• No Remote Tracking: FormCheck contains no third-party analytics SDKs, trackers, or background telemetry.\n\n'
                 '• No Sensitive Identifiers: FormCheck does not ask for or collect sensitive numbers like Aadhaar or PAN.',
                 style: TextStyle(fontSize: 13.5, height: 1.45),
@@ -147,38 +147,6 @@ class WelcomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Scope Pill (Oval badge)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceSubtleDark
-                      : AppColors.surfaceSubtleLight,
-                  borderRadius: BorderRadius.circular(AppRadius.badge),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.borderDark
-                        : AppColors.borderLight,
-                  ),
-                ),
-                child: Text(
-                  AppStrings.welcomeScopeCaption,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                    letterSpacing: -0.1,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
               // Headline
               Text(
                 AppStrings.welcomeHeadline,

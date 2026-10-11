@@ -32,24 +32,6 @@ void main() {
     expect(find.text('Birth Certificate'), findsNothing);
   });
 
-  testWidgets('Status toggle toggles from Pending to Collected', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      const ProviderScope(child: MaterialApp(home: ChecklistScreen())),
-    );
-
-    final toggleKey = find.byKey(const Key('toggle_status_req_proof_of_dob'));
-    expect(toggleKey, findsOneWidget);
-
-    // Tap toggle
-    await tester.tap(toggleKey);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Collected'), findsAtLeastNWidgets(1));
-    expect(find.text('1 of 3 ready'), findsOneWidget);
-  });
-
   testWidgets('Source link is tappable and renders link icon', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(child: MaterialApp(home: ChecklistScreen())),

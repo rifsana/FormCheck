@@ -22,8 +22,7 @@ void main() {
       expect(find.text(AppStrings.benefit2Title), findsOneWidget);
       expect(find.text(AppStrings.benefit3Title), findsOneWidget);
 
-      // Scope & Concise Notice
-      expect(find.text(AppStrings.welcomeScopeCaption), findsOneWidget);
+      // Concise Notice
       expect(find.text(AppStrings.welcomeConciseDisclaimer), findsOneWidget);
 
       // CTA Button

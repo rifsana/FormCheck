@@ -6,10 +6,8 @@ class AppStrings {
   // Welcome Screen Strings
   static const String welcomeHeadline = 'Get your passport documents ready.';
   static const String welcomeSupportingText =
-      'Know what you need. Catch possible mismatches. Apply with confidence.';
+      'Know what you need. Clear document requirements. Apply with confidence.';
   static const String welcomeCta = 'Check my documents';
-  static const String welcomeScopeCaption =
-      'For first-time adult applicants • Normal scheme';
   static const String welcomeConciseDisclaimer =
       'FormCheck is an independent preparation assistant, not a government service.';
 
@@ -17,9 +15,9 @@ class AppStrings {
   static const String benefit1Title = 'Verified checklist';
   static const String benefit1Desc =
       'Mapped strictly to official Passport Seva rules.';
-  static const String benefit2Title = 'Document checks';
+  static const String benefit2Title = 'Clear guidance';
   static const String benefit2Desc =
-      'Spot differences in spelling, names, and dates.';
+      'See every acceptable document and official source.';
   static const String benefit3Title = 'Private by design';
   static const String benefit3Desc =
       'Your document details stay on your phone.';
