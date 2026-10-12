@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/official_sources.dart';
+import '../../../core/localization/app_language.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/localization/language_selector_sheet.dart';
+import '../../../core/localization/locale_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends ConsumerWidget {
   const WelcomeScreen({super.key});
 
   Future<void> _openOfficialPortal(BuildContext context) async {
-    final uri = Uri.parse(OfficialSources.applicationGuide.url);
+    final uri = Uri.parse(OfficialSources.passportSevaPortal.url);
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
@@ -20,9 +24,7 @@ class WelcomeScreen extends StatelessWidget {
       } catch (_) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Could not open external official link.'),
-            ),
+            SnackBar(content: Text(context.l10n.couldNotOpenLink)),
           );
         }
       }
@@ -30,21 +32,22 @@ class WelcomeScreen extends StatelessWidget {
   }
 
   void _showDisclaimerDialog(BuildContext context) {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
         ),
-        title: const Text('Legal Notice'),
-        content: const Text(
-          AppStrings.fullDisclaimerBody,
-          style: TextStyle(fontSize: 14, height: 1.45),
+        title: Text(l10n.legalNoticeTitle),
+        content: Text(
+          l10n.fullDisclaimerBody,
+          style: const TextStyle(fontSize: 14, height: 1.45),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('I Understand'),
+            child: Text(l10n.iUnderstand),
           ),
         ],
       ),
@@ -52,24 +55,22 @@ class WelcomeScreen extends StatelessWidget {
   }
 
   void _showPrivacyDialog(BuildContext context) {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
         ),
-        title: const Text('Privacy Architecture'),
-        content: const SingleChildScrollView(
+        title: Text(l10n.privacyArchitectureTitle),
+        content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '• Zero Cloud Uploads: Document information is never transmitted to remote servers.\n\n'
-                '• Local Processing: On-device OCR processing executes entirely on your smartphone when scanning documents.\n\n'
-                '• No Remote Tracking: FormCheck contains no third-party analytics SDKs, trackers, or background telemetry.\n\n'
-                '• No Sensitive Identifiers: FormCheck does not ask for or collect sensitive numbers like Aadhaar or PAN.',
-                style: TextStyle(fontSize: 13.5, height: 1.45),
+                l10n.privacyPoints,
+                style: const TextStyle(fontSize: 13.5, height: 1.45),
               ),
             ],
           ),
@@ -77,7 +78,7 @@ class WelcomeScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: Text(l10n.iUnderstand),
           ),
         ],
       ),
@@ -85,58 +86,65 @@ class WelcomeScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
+    final currentLocale = ref.watch(localeProvider);
+    final currentLang = AppLanguage.fromCode(currentLocale.languageCode);
 
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 20,
         title: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(5),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: isDark
-                    ? AppColors.surfaceSubtleDark
-                    : AppColors.surfaceSubtleLight,
+                    ? AppColors.sapphireContainerDark
+                    : AppColors.sapphireContainerLight,
                 borderRadius: BorderRadius.circular(AppRadius.badge),
-                border: Border.all(
-                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                ),
               ),
               child: Icon(
-                Icons.assignment_turned_in_outlined,
+                Icons.description_outlined,
+                size: 18,
                 color: isDark
                     ? AppColors.silverAccent
                     : AppColors.sapphirePrimary,
-                size: 18,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Text(
-              AppStrings.appName,
-              style: TextStyle(
+              l10n.appName,
+              style: const TextStyle(
+                fontSize: 16,
                 fontWeight: FontWeight.w700,
-                fontSize: 18,
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-                letterSpacing: -0.3,
+                letterSpacing: -0.2,
               ),
             ),
           ],
         ),
         actions: [
-          IconButton(
-            tooltip: 'Legal Notice',
-            icon: const Icon(Icons.info_outline_rounded, size: 20),
-            onPressed: () => _showDisclaimerDialog(context),
+          // Language selector button
+          TextButton.icon(
+            key: const Key('language_selector_button'),
+            onPressed: () => showLanguageSelectorSheet(context),
+            icon: const Icon(Icons.language_rounded, size: 16),
+            label: Text(
+              currentLang.nativeName,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            style: TextButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              foregroundColor: isDark
+                  ? AppColors.silverAccent
+                  : AppColors.sapphirePrimary,
+            ),
           ),
           IconButton(
-            tooltip: 'Privacy Information',
-            icon: const Icon(Icons.shield_outlined, size: 20),
-            onPressed: () => _showPrivacyDialog(context),
+            key: const Key('settings_button'),
+            tooltip: l10n.settingsTitle,
+            icon: const Icon(Icons.settings_outlined, size: 20),
+            onPressed: () => context.push('/settings'),
           ),
           const SizedBox(width: 8),
         ],
@@ -147,41 +155,9 @@ class WelcomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Scope Pill (Oval badge)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceSubtleDark
-                      : AppColors.surfaceSubtleLight,
-                  borderRadius: BorderRadius.circular(AppRadius.badge),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.borderDark
-                        : AppColors.borderLight,
-                  ),
-                ),
-                child: Text(
-                  AppStrings.welcomeScopeCaption,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                    letterSpacing: -0.1,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
               // Headline
               Text(
-                AppStrings.welcomeHeadline,
+                l10n.welcomeHeadline,
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
 
@@ -189,7 +165,7 @@ class WelcomeScreen extends StatelessWidget {
 
               // Supporting Text
               Text(
-                AppStrings.welcomeSupportingText,
+                l10n.welcomeSupportingText,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
 
@@ -212,21 +188,27 @@ class WelcomeScreen extends StatelessWidget {
                   children: [
                     _BenefitTile(
                       icon: Icons.verified_outlined,
-                      title: AppStrings.benefit1Title,
-                      description: AppStrings.benefit1Desc,
+                      title: l10n.benefit1Title,
+                      description: l10n.benefit1Desc,
                       showDivider: true,
                     ),
                     _BenefitTile(
-                      icon: Icons.compare_arrows_rounded,
-                      title: AppStrings.benefit2Title,
-                      description: AppStrings.benefit2Desc,
+                      icon: Icons.info_outline_rounded,
+                      title: l10n.benefit2Title,
+                      description: l10n.benefit2Desc,
                       showDivider: true,
                     ),
-                    _BenefitTile(
-                      icon: Icons.lock_outline_rounded,
-                      title: AppStrings.benefit3Title,
-                      description: AppStrings.benefit3Desc,
-                      showDivider: false,
+                    InkWell(
+                      onTap: () => _showPrivacyDialog(context),
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(AppRadius.card),
+                      ),
+                      child: _BenefitTile(
+                        icon: Icons.lock_outline_rounded,
+                        title: l10n.benefit3Title,
+                        description: l10n.benefit3Desc,
+                        showDivider: false,
+                      ),
                     ),
                   ],
                 ),
@@ -268,7 +250,7 @@ class WelcomeScreen extends StatelessWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            AppStrings.welcomeConciseDisclaimer,
+                            l10n.welcomeConciseDisclaimer,
                             style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w500,
@@ -299,7 +281,7 @@ class WelcomeScreen extends StatelessWidget {
                 key: const Key('check_documents_button'),
                 onPressed: () => context.push('/profile'),
                 icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                label: const Text(AppStrings.welcomeCta),
+                label: Text(l10n.welcomeCta),
               ),
 
               const SizedBox(height: 12),
@@ -309,7 +291,7 @@ class WelcomeScreen extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: () => _openOfficialPortal(context),
                   icon: const Icon(Icons.open_in_browser_rounded, size: 15),
-                  label: const Text('Official Passport Seva Portal'),
+                  label: Text(l10n.officialPortal),
                   style: TextButton.styleFrom(
                     visualDensity: VisualDensity.compact,
                     foregroundColor: isDark

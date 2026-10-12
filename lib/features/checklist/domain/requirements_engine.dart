@@ -68,7 +68,7 @@ class RequirementsEngine {
 
       case NonEcrCriterion.none:
         nonEcrEligible = false;
-        nonEcrDesc = 'ECR Category. You do not need educational or tax proof; your passport will be stamped ECR.';
+        nonEcrDesc = 'ECR Category. You do not need educational or tax proof; your passport will be printed with "Emigration Check Required" (clearance is needed only when taking up employment in 18 notified countries).';
         break;
     }
 

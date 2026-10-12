@@ -36,19 +36,23 @@ void main() {
   });
 
   testWidgets(
-    'Checklist screen renders mandatory items, source links, and toggle status',
+    'Checklist screen renders mandatory items and source links cleanly without toggles',
     (tester) async {
       await tester.pumpWidget(
         const ProviderScope(child: MaterialApp(home: ChecklistScreen())),
       );
 
       // Mandatory documents section in plain language
+      expect(find.text('Required Documents'), findsOneWidget);
       expect(find.text('DOCUMENTS EVERYONE NEEDS'), findsOneWidget);
       expect(find.text('Proof of your date of birth'), findsOneWidget);
       expect(find.text('Proof of your current address'), findsOneWidget);
 
-      // Toggle button exists
-      expect(find.text('Pending'), findsAtLeastNWidgets(2));
+      // Official action icon exists
+      expect(
+        find.byKey(const Key('official_advisor_appbar_action')),
+        findsOneWidget,
+      );
     },
   );
 }

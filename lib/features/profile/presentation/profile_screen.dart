@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/official_sources.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../domain/applicant_profile.dart';
@@ -29,9 +30,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       } catch (_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Could not open external official link.'),
-            ),
+            SnackBar(content: Text(context.l10n.couldNotOpenLink)),
           );
         }
       }
@@ -39,6 +38,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showUnsupportedModal(String reason) {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -46,16 +46,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
         ),
-        title: const Text('Unsupported Category'),
+        title: Text(l10n.unsupportedCategoryTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(reason, style: const TextStyle(fontSize: 14, height: 1.4)),
             const SizedBox(height: 14),
-            const Text(
-              'Please visit the official Passport Seva Document Advisor to see the exact requirements for your specific category.',
-              style: TextStyle(
+            Text(
+              l10n.unsupportedCategoryAdvisorNotice,
+              style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondaryLight,
               ),
@@ -68,11 +68,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Navigator.of(context).pop();
               _openOfficialAdvisor();
             },
-            child: const Text('Open Official Advisor'),
+            child: Text(l10n.openOfficialAdvisor),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Change Selection'),
+            child: Text(l10n.changeSelection),
           ),
         ],
       ),
@@ -107,10 +107,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('About you'),
+        title: Text(l10n.questionnaireTitle),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(2),
           child: LinearProgressIndicator(
@@ -139,7 +140,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   children: [
                     // Step Indicator
                     Text(
-                      'STEP ${_currentStep + 1} OF 3',
+                      l10n.stepOf(_currentStep + 1),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -153,22 +154,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                     if (_currentStep == 0) ...[
                       Text(
-                        'Your application',
+                        l10n.step1Title,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'FormCheck is designed for first-time adult applicants applying under the normal scheme.',
+                        l10n.step1Subtitle,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 20),
 
                       _SectionGroup(
-                        title: 'Application type',
+                        title: l10n.applicationTypeLabel,
                         children: [
                           _SelectableTile(
-                            title: 'Fresh passport (First-time)',
-                            subtitle: 'You have never held an ordinary Indian passport before',
+                            title: l10n.freshPassportTitle,
+                            subtitle: l10n.freshPassportSubtitle,
                             selected:
                                 profile.applicationType ==
                                 ApplicationType.fresh,
@@ -178,11 +179,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: 'Re-issue of passport',
-                            subtitle: 'Renewing, replacing an expired passport, or pages full',
+                            title: l10n.reissuePassportTitle,
+                            subtitle: l10n.reissuePassportSubtitle,
                             selected:
                                 profile.applicationType ==
                                 ApplicationType.reissue,
+                            badge: 'Official guide',
                             onTap: () => ref
                                 .read(profileProvider.notifier)
                                 .updateApplicationType(ApplicationType.reissue),
@@ -190,15 +192,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 18),
+
+                      const SizedBox(height: 20),
 
                       _SectionGroup(
-                        title: 'Processing scheme',
+                        title: l10n.passportSchemeLabel,
                         children: [
                           _SelectableTile(
-                            title: 'Normal scheme',
-                            subtitle:
-                                'Standard processing and routine appointment',
+                            title: l10n.normalSchemeTitle,
+                            subtitle: l10n.normalSchemeSubtitle,
                             selected: profile.scheme == PassportScheme.normal,
                             onTap: () => ref
                                 .read(profileProvider.notifier)
@@ -206,9 +208,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: 'Tatkaal scheme',
-                            subtitle: 'Urgent processing requiring emergency verification',
+                            title: l10n.tatkaalSchemeTitle,
+                            subtitle: l10n.tatkaalSchemeSubtitle,
                             selected: profile.scheme == PassportScheme.tatkaal,
+                            badge: 'Official guide',
                             onTap: () => ref
                                 .read(profileProvider.notifier)
                                 .updateScheme(PassportScheme.tatkaal),
@@ -216,13 +219,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 18),
+
+                      const SizedBox(height: 20),
 
                       _SectionGroup(
-                        title: 'Your age',
+                        title: l10n.ageCategoryLabel,
                         children: [
                           _SelectableTile(
-                            title: 'Adult (18 or older)',
+                            title: l10n.adultAgeTitle,
+                            subtitle: l10n.adultAgeSubtitle,
                             selected:
                                 profile.ageCategory == AgeCategory.adult18Plus,
                             onTap: () => ref
@@ -231,9 +236,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: 'Under 18 (Minor)',
+                            title: l10n.minorAgeTitle,
+                            subtitle: l10n.minorAgeSubtitle,
                             selected:
                                 profile.ageCategory == AgeCategory.minorUnder18,
+                            badge: 'Official guide',
                             onTap: () => ref
                                 .read(profileProvider.notifier)
                                 .updateAgeCategory(AgeCategory.minorUnder18),
@@ -243,22 +250,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ] else if (_currentStep == 1) ...[
                       Text(
-                        'Emigration status (Non-ECR)',
+                        l10n.step2Title,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Non-ECR means you do not need emigration clearance when traveling abroad for work. If you passed 10th grade, pay income taxes, or are 50+, you qualify. Select what applies:',
+                        l10n.step2Subtitle,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 20),
 
                       _SectionGroup(
-                        title: 'Select what applies to you',
+                        title: l10n.nonEcrCriteriaLabel,
                         children: [
                           _SelectableTile(
-                            title: '10th grade (Matriculation) or higher',
-                            subtitle: 'Holds a 10th pass, 12th, degree, or post-graduation certificate',
+                            title: l10n.critMatriculation,
+                            subtitle: l10n.critMatriculationSub,
                             selected:
                                 profile.nonEcrCriterion ==
                                 NonEcrCriterion.matriculationOrAbove,
@@ -270,8 +277,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: 'Income tax payer',
-                            subtitle: 'Filed an individual income tax return in the past year',
+                            title: l10n.critTaxPayer,
+                            subtitle: l10n.critTaxPayerSub,
                             selected:
                                 profile.nonEcrCriterion ==
                                 NonEcrCriterion.incomeTaxPayer,
@@ -283,8 +290,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: '50 years of age or older',
-                            subtitle: 'Anyone aged 50 and above qualifies automatically',
+                            title: l10n.critAge50,
+                            subtitle: l10n.critAge50Sub,
                             selected:
                                 profile.nonEcrCriterion ==
                                 NonEcrCriterion.age50Plus,
@@ -296,8 +303,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: 'Gazetted government servant / PSU',
-                            subtitle: 'Gazetted officers or immediate dependent family members',
+                            title: l10n.critGovtServant,
+                            subtitle: l10n.critGovtServantSub,
                             selected:
                                 profile.nonEcrCriterion ==
                                 NonEcrCriterion.govtServant,
@@ -309,8 +316,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: '2-year vocational diploma',
-                            subtitle: 'Completed a recognized 2-year NCVT or SCVT trade diploma',
+                            title: l10n.critDiploma,
+                            subtitle: l10n.critDiplomaSub,
                             selected:
                                 profile.nonEcrCriterion ==
                                 NonEcrCriterion.vocationalDiploma2Year,
@@ -322,8 +329,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: 'Spouse of a qualified person',
-                            subtitle: 'Your spouse qualifies as a graduate, taxpayer, or govt officer',
+                            title: l10n.critSpouse,
+                            subtitle: l10n.critSpouseSub,
                             selected:
                                 profile.nonEcrCriterion ==
                                 NonEcrCriterion.spouseOfEligiblePerson,
@@ -335,8 +342,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             showDivider: true,
                           ),
                           _SelectableTile(
-                            title: 'None of these (ECR status)',
-                            subtitle: 'Your passport will have an ECR stamp; you do not need educational proof',
+                            title: l10n.critNone,
+                            subtitle: l10n.critNoneSub,
                             selected:
                                 profile.nonEcrCriterion == NonEcrCriterion.none,
                             onTap: () => ref
@@ -348,100 +355,78 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ] else ...[
                       Text(
-                        'Name & history',
+                        l10n.step3Title,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Let us know if your name has changed so we can include the right paperwork.',
+                        l10n.step3Subtitle,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 20),
 
                       _SectionGroup(
-                        title: 'Name change',
+                        title: l10n.nameChangeQuestion,
                         children: [
-                          Material(
-                            color: Colors.transparent,
-                            child: SwitchListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 6,
-                              ),
-                              title: const Text(
-                                'Have you ever changed your name?',
-                                style: TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              subtitle: Text(
-                                'Includes marriage surname change, deed poll, or legal spelling update',
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  color: isDark
-                                      ? AppColors.textSecondaryDark
-                                      : AppColors.textSecondaryLight,
-                                ),
-                              ),
-                              value: profile.hasNameChange,
-                              onChanged: (v) => ref
-                                  .read(profileProvider.notifier)
-                                  .updateHasNameChange(v),
-                            ),
+                          _SelectableTile(
+                            title: l10n.noOption,
+                            subtitle: 'Never changed legal name',
+                            selected: !profile.hasNameChange,
+                            onTap: () => ref
+                                .read(profileProvider.notifier)
+                                .updateHasNameChange(false),
+                            showDivider: true,
+                          ),
+                          _SelectableTile(
+                            title: l10n.yesOption,
+                            subtitle: l10n.nameChangeSub,
+                            selected: profile.hasNameChange,
+                            onTap: () => ref
+                                .read(profileProvider.notifier)
+                                .updateHasNameChange(true),
+                            showDivider: false,
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
 
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? AppColors.surfaceSubtleDark
-                              : AppColors.surfaceSubtleLight,
-                          borderRadius: BorderRadius.circular(AppRadius.option),
-                          border: Border.all(
-                            color: isDark
-                                ? AppColors.borderDark
-                                : AppColors.borderLight,
+                      const SizedBox(height: 20),
+
+                      _SectionGroup(
+                        title: l10n.multipleAddressQuestion,
+                        children: [
+                          _SelectableTile(
+                            title: l10n.noOption,
+                            subtitle: 'Lived at current address only',
+                            selected:
+                                !profile.hasResidedMultipleAddressesPastYear,
+                            onTap: () => ref
+                                .read(profileProvider.notifier)
+                                .updateHasResidedMultipleAddresses(false),
+                            showDivider: true,
                           ),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              Icons.shield_outlined,
-                              size: 18,
-                              color: isDark
-                                  ? AppColors.silverAccent
-                                  : AppColors.sapphirePrimary,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'FormCheck only works out which document rules apply to you. We never ask for or store sensitive numbers like Aadhaar or PAN.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: isDark
-                                      ? AppColors.textSecondaryDark
-                                      : AppColors.textSecondaryLight,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          _SelectableTile(
+                            title: l10n.yesOption,
+                            subtitle: l10n.multipleAddressSub,
+                            selected:
+                                profile.hasResidedMultipleAddressesPastYear,
+                            onTap: () => ref
+                                .read(profileProvider.notifier)
+                                .updateHasResidedMultipleAddresses(true),
+                            showDivider: false,
+                          ),
+                        ],
                       ),
                     ],
+
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
             ),
 
-            // Bottom Navigation Strip
+            // Bottom Navigation Controls
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
                 border: Border(
@@ -454,21 +439,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
               child: Row(
                 children: [
-                  OutlinedButton(
-                    key: const Key('profile_back_button'),
-                    onPressed: _handleBack,
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(90, 48),
+                  if (_currentStep > 0)
+                    Expanded(
+                      flex: 1,
+                      child: OutlinedButton(
+                        onPressed: _handleBack,
+                        child: Text(l10n.backButton),
+                      ),
                     ),
-                    child: Text(_currentStep == 0 ? 'Cancel' : 'Back'),
-                  ),
-                  const SizedBox(width: 12),
+                  if (_currentStep > 0) const SizedBox(width: 12),
                   Expanded(
+                    flex: 2,
                     child: ElevatedButton(
                       key: const Key('profile_continue_button'),
                       onPressed: _handleContinue,
                       child: Text(
-                        _currentStep == 2 ? 'Generate Checklist' : 'Continue',
+                        _currentStep == 2
+                            ? l10n.generateChecklistCta
+                            : l10n.continueButton,
                       ),
                     ),
                   ),
@@ -495,29 +483,25 @@ class _SectionGroup extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 6),
-          child: Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-              color: isDark
-                  ? AppColors.textMutedDark
-                  : AppColors.textMutedLight,
-            ),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w600,
+            color: isDark
+                ? AppColors.textPrimaryDark
+                : AppColors.textPrimaryLight,
           ),
         ),
-        Material(
-          color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-          shape: RoundedRectangleBorder(
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
             borderRadius: BorderRadius.circular(AppRadius.card),
-            side: BorderSide(
+            border: Border.all(
               color: isDark ? AppColors.borderDark : AppColors.borderLight,
             ),
           ),
-          clipBehavior: Clip.antiAlias,
           child: Column(children: children),
         ),
       ],
@@ -527,15 +511,17 @@ class _SectionGroup extends StatelessWidget {
 
 class _SelectableTile extends StatelessWidget {
   final String title;
-  final String? subtitle;
+  final String subtitle;
   final bool selected;
+  final String? badge;
   final VoidCallback onTap;
   final bool showDivider;
 
   const _SelectableTile({
     required this.title,
-    this.subtitle,
+    required this.subtitle,
     required this.selected,
+    this.badge,
     required this.onTap,
     required this.showDivider,
   });
@@ -550,25 +536,28 @@ class _SelectableTile extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
+            borderRadius: BorderRadius.circular(AppRadius.card),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Icon(
-                      selected
-                          ? Icons.check_circle_rounded
-                          : Icons.radio_button_off,
-                      size: 19,
-                      color: selected
-                          ? (isDark
-                                ? AppColors.silverAccent
-                                : AppColors.sapphirePrimary)
-                          : (isDark
-                                ? AppColors.borderDark
-                                : AppColors.textMutedLight),
+                  Container(
+                    margin: const EdgeInsets.only(top: 2),
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: selected
+                            ? (isDark
+                                  ? AppColors.silverAccent
+                                  : AppColors.sapphirePrimary)
+                            : (isDark
+                                  ? AppColors.borderDark
+                                  : AppColors.borderLight),
+                        width: selected ? 5 : 1.5,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -576,32 +565,65 @@ class _SelectableTile extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                title,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? AppColors.textPrimaryDark
+                                      : AppColors.textPrimaryLight,
+                                ),
+                              ),
+                            ),
+                            if (badge != null) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? AppColors.noticeBgDark
+                                      : AppColors.noticeBgLight,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.badge,
+                                  ),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? AppColors.noticeBorderDark
+                                        : AppColors.noticeBorderLight,
+                                  ),
+                                ),
+                                child: Text(
+                                  badge!,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark
+                                        ? AppColors.noticeTextDark
+                                        : AppColors.noticeTextLight,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 2),
                         Text(
-                          title,
+                          subtitle,
                           style: TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: selected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
+                            fontSize: 12,
                             color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
-                            letterSpacing: -0.1,
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
+                            height: 1.35,
                           ),
                         ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle!,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondaryLight,
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/official_sources.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../domain/passport_rule.dart';
@@ -22,9 +23,7 @@ class ChecklistScreen extends ConsumerWidget {
       } catch (_) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Could not open external official link.'),
-            ),
+            SnackBar(content: Text(context.l10n.couldNotOpenLink)),
           );
         }
       }
@@ -34,12 +33,12 @@ class ChecklistScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final resolution = ref.watch(checklistResolutionProvider);
-    final progress = ref.watch(checklistProgressProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
 
     if (!resolution.isSupported) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Checklist Error')),
+        appBar: AppBar(title: Text(l10n.unsupportedCategoryTitle)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -56,14 +55,14 @@ class ChecklistScreen extends ConsumerWidget {
                 const SizedBox(height: 14),
                 Text(
                   resolution.unsupportedReason ??
-                      'Unsupported application category.',
+                      l10n.unsupportedCategoryAdvisorNotice,
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 14.5),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () => context.pop(),
-                  child: const Text('Back to Profile'),
+                  child: Text(l10n.backButton),
                 ),
               ],
             ),
@@ -72,24 +71,13 @@ class ChecklistScreen extends ConsumerWidget {
       );
     }
 
-    final totalActionable = resolution.requirements
-        .where((r) => r.classification != RequirementClassification.guidance)
-        .length;
-    final collectedCount = resolution.requirements
-        .where(
-          (r) =>
-              r.classification != RequirementClassification.guidance &&
-              progress[r.id] == ItemCollectionStatus.collected,
-        )
-        .length;
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Your document checklist'),
+        title: Text(l10n.checklistTitle),
         actions: [
           IconButton(
             key: const Key('official_advisor_appbar_action'),
-            tooltip: 'Official Document Advisor',
+            tooltip: l10n.officialAdvisorAction,
             icon: const Icon(Icons.open_in_browser_rounded, size: 20),
             onPressed: () =>
                 _openSourceUrl(context, OfficialSources.docAdvisor.url),
@@ -103,7 +91,7 @@ class ChecklistScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Summary Header (Apple Settings Grouped Inset Style)
+              // Header Summary Card (Category & Non-ECR status)
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -124,9 +112,9 @@ class ChecklistScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '$collectedCount of $totalActionable ready',
+                          l10n.requiredDocumentsHeader,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 15,
                             fontWeight: FontWeight.w700,
                             color: isDark
                                 ? AppColors.textPrimaryDark
@@ -162,8 +150,8 @@ class ChecklistScreen extends ConsumerWidget {
                           ),
                           child: Text(
                             resolution.isNonEcrEligible
-                                ? 'Non-ECR'
-                                : 'ECR Category',
+                                ? l10n.nonEcrBadge
+                                : l10n.ecrBadge,
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
@@ -179,71 +167,15 @@ class ChecklistScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(
-                        value: totalActionable > 0
-                            ? collectedCount / totalActionable
-                            : 0,
-                        backgroundColor: isDark
-                            ? AppColors.borderDark
-                            : AppColors.borderLight,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          isDark
-                              ? AppColors.silverAccent
-                              : AppColors.sapphirePrimary,
-                        ),
-                        minHeight: 5,
-                      ),
-                    ),
                     const SizedBox(height: 8),
                     Text(
                       resolution.nonEcrStatusDescription,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 12.5,
                         color: isDark
                             ? AppColors.textSecondaryDark
                             : AppColors.textSecondaryLight,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Restrained, Plain-language Progress Disclaimer
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceSubtleDark
-                      : AppColors.surfaceSubtleLight,
-                  borderRadius: BorderRadius.circular(AppRadius.badge),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 14,
-                      color: isDark
-                          ? AppColors.textMutedDark
-                          : AppColors.textMutedLight,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Marking items "Collected" helps you track your preparation. It is not an official verification.',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight,
-                        ),
+                        height: 1.35,
                       ),
                     ),
                   ],
@@ -252,9 +184,9 @@ class ChecklistScreen extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
-              // SECTION 1: Mandatory Requirements
+              // SECTION 1: Mandatory Documents
               Text(
-                'DOCUMENTS EVERYONE NEEDS',
+                l10n.sectionEveryoneNeeds,
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
@@ -264,24 +196,20 @@ class ChecklistScreen extends ConsumerWidget {
                       : AppColors.textMutedLight,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               ...resolution.mandatoryRequirements.map(
                 (req) => _ChecklistRowCard(
                   key: Key('checklist_req_${req.id}'),
                   requirement: req,
-                  status: progress[req.id] ?? ItemCollectionStatus.pending,
-                  onToggle: () => ref
-                      .read(checklistProgressProvider.notifier)
-                      .toggleStatus(req.id),
                   onOpenSource: () => _openSourceUrl(context, req.source.url),
                 ),
               ),
 
-              // SECTION 2: Conditional Requirements
+              // SECTION 2: Conditional Requirements (if applicable)
               if (resolution.conditionalRequirements.isNotEmpty) ...[
                 const SizedBox(height: 20),
                 Text(
-                  'EXTRA DOCUMENTS YOU MAY NEED',
+                  l10n.sectionAdditionalDocs,
                   style: TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
@@ -291,15 +219,11 @@ class ChecklistScreen extends ConsumerWidget {
                         : AppColors.textMutedLight,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 ...resolution.conditionalRequirements.map(
                   (req) => _ChecklistRowCard(
                     key: Key('checklist_req_${req.id}'),
                     requirement: req,
-                    status: progress[req.id] ?? ItemCollectionStatus.pending,
-                    onToggle: () => ref
-                        .read(checklistProgressProvider.notifier)
-                        .toggleStatus(req.id),
                     onOpenSource: () => _openSourceUrl(context, req.source.url),
                   ),
                 ),
@@ -308,7 +232,7 @@ class ChecklistScreen extends ConsumerWidget {
               // SECTION 3: PSK In-Person Guidance
               const SizedBox(height: 20),
               Text(
-                'WHAT TO BRING TO YOUR APPOINTMENT',
+                l10n.sectionWhatToBring,
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
@@ -318,7 +242,7 @@ class ChecklistScreen extends ConsumerWidget {
                       : AppColors.textMutedLight,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               ...resolution.guidanceNotes.map(
                 (req) => _GuidanceRowCard(
                   requirement: req,
@@ -326,14 +250,47 @@ class ChecklistScreen extends ConsumerWidget {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
 
-              // Action button to proceed to Scanner (Phase 4)
-              ElevatedButton.icon(
-                key: const Key('proceed_to_scanner_button'),
-                onPressed: () => context.push('/scanner'),
-                icon: const Icon(Icons.document_scanner_outlined, size: 18),
-                label: const Text('Check Document Mismatches (OCR)'),
+              // Appointment Reminder Banner
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.surfaceSubtleDark
+                      : AppColors.surfaceSubtleLight,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 18,
+                      color: isDark
+                          ? AppColors.silverAccent
+                          : AppColors.sapphirePrimary,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.appointmentNotice,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 20),
@@ -347,15 +304,11 @@ class ChecklistScreen extends ConsumerWidget {
 
 class _ChecklistRowCard extends StatefulWidget {
   final DocumentRequirement requirement;
-  final ItemCollectionStatus status;
-  final VoidCallback onToggle;
   final VoidCallback onOpenSource;
 
   const _ChecklistRowCard({
     super.key,
     required this.requirement,
-    required this.status,
-    required this.onToggle,
     required this.onOpenSource,
   });
 
@@ -368,8 +321,8 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isCollected = widget.status == ItemCollectionStatus.collected;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -383,107 +336,79 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row: Title, Description, and Softly Rounded Status Toggle Pill
+          // Header: Document Title and Explanation
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.requirement.title,
-                        style: TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                          letterSpacing: -0.1,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        widget.requirement.explanation,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
+                Text(
+                  widget.requirement.title,
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: isDark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimaryLight,
+                    letterSpacing: -0.1,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(height: 4),
+                Text(
+                  widget.requirement.explanation,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
 
-                // Softly rounded oval status toggle pill (AppRadius.toggle)
-                Material(
-                  color: Colors.transparent,
+          const Divider(height: 1),
+
+          // Collapsible Action Bar: Accepted Evidence Expander & Source Link
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
                   child: InkWell(
-                    key: Key('toggle_status_${widget.requirement.id}'),
-                    onTap: widget.onToggle,
-                    borderRadius: BorderRadius.circular(AppRadius.toggle),
-                    child: Container(
-                      constraints: const BoxConstraints(
-                        minHeight: 36,
-                        minWidth: 84,
-                      ),
+                    key: Key('expand_evidence_${widget.requirement.id}'),
+                    onTap: () => setState(() => _expanded = !_expanded),
+                    borderRadius: BorderRadius.circular(AppRadius.option),
+                    child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isCollected
-                            ? (isDark
-                                  ? AppColors.successBgDark
-                                  : AppColors.successBgLight)
-                            : (isDark
-                                  ? AppColors.surfaceSubtleDark
-                                  : AppColors.surfaceSubtleLight),
-                        borderRadius: BorderRadius.circular(AppRadius.toggle),
-                        border: Border.all(
-                          color: isCollected
-                              ? (isDark
-                                    ? AppColors.successBorderDark
-                                    : AppColors.successBorderLight)
-                              : (isDark
-                                    ? AppColors.borderDark
-                                    : AppColors.borderLight),
-                        ),
+                        vertical: 8,
+                        horizontal: 4,
                       ),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            isCollected
-                                ? Icons.check_circle_rounded
-                                : Icons.radio_button_off,
-                            size: 15,
-                            color: isCollected
-                                ? (isDark
-                                      ? AppColors.successTextDark
-                                      : AppColors.successTextLight)
-                                : (isDark
-                                      ? AppColors.textMutedDark
-                                      : AppColors.textMutedLight),
+                            _expanded
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.keyboard_arrow_down_rounded,
+                            size: 18,
+                            color: isDark
+                                ? AppColors.silverAccent
+                                : AppColors.sapphirePrimary,
                           ),
-                          const SizedBox(width: 5),
+                          const SizedBox(width: 6),
                           Text(
-                            isCollected ? 'Collected' : 'Pending',
+                            _expanded
+                                ? l10n.hideAcceptedDocs
+                                : l10n.whatDocsAccepted(
+                                    widget.requirement.acceptedEvidence.length,
+                                  ),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: isCollected
-                                  ? (isDark
-                                        ? AppColors.successTextDark
-                                        : AppColors.successTextLight)
-                                  : (isDark
-                                        ? AppColors.textSecondaryDark
-                                        : AppColors.textSecondaryLight),
+                              color: isDark
+                                  ? AppColors.silverAccent
+                                  : AppColors.sapphirePrimary,
                             ),
                           ),
                         ],
@@ -491,204 +416,114 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
                     ),
                   ),
                 ),
+                IconButton(
+                  key: Key('source_link_${widget.requirement.id}'),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                  tooltip: l10n.sourceLinkTooltip(
+                    widget.requirement.source.title,
+                  ),
+                  onPressed: widget.onOpenSource,
+                  visualDensity: VisualDensity.compact,
+                  color: isDark
+                      ? AppColors.textMutedDark
+                      : AppColors.textMutedLight,
+                ),
               ],
             ),
           ),
 
-          if (widget.requirement.applicabilityCondition != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceSubtleDark
-                      : AppColors.surfaceSubtleLight,
-                  borderRadius: BorderRadius.circular(AppRadius.badge),
-                ),
-                child: Text(
-                  widget.requirement.applicabilityCondition!,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                  ),
-                ),
-              ),
-            ),
-
-          Divider(
-            height: 1,
-            color: isDark
-                ? AppColors.borderSubtleDark
-                : AppColors.borderSubtleLight,
-          ),
-
-          // Evidence Expander Bar (Accessible 48dp target)
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              key: Key('expand_evidence_${widget.requirement.id}'),
-              onTap: () => setState(() => _expanded = !_expanded),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _expanded
-                          ? Icons.expand_less_rounded
-                          : Icons.expand_more_rounded,
-                      size: 18,
-                      color: isDark
-                          ? AppColors.silverAccent
-                          : AppColors.sapphirePrimary,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Documents you can use (${widget.requirement.acceptedEvidence.length} options)',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? AppColors.silverAccent
-                              : AppColors.sapphirePrimary,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      _expanded ? 'Hide' : 'View options',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: isDark
-                            ? AppColors.textMutedDark
-                            : AppColors.textMutedLight,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Expanded Evidence List (Notion bulleted hierarchy with clean readable text)
+          // Expanded Evidence List
           if (_expanded) ...[
-            Divider(
-              height: 1,
-              color: isDark
-                  ? AppColors.borderSubtleDark
-                  : AppColors.borderSubtleLight,
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.surfaceSubtleDark
+                    : AppColors.surfaceSubtleLight,
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(AppRadius.card),
+                ),
+              ),
               child: Column(
-                children: widget.requirement.acceptedEvidence.map((doc) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '• ',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: isDark
-                                ? AppColors.silverAccent
-                                : AppColors.sapphirePrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                doc.name,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark
-                                      ? AppColors.textPrimaryDark
-                                      : AppColors.textPrimaryLight,
-                                ),
-                              ),
-                              Text(
-                                doc.conditions != null
-                                    ? '${doc.issuingAuthority} — ${doc.conditions}'
-                                    : doc.issuingAuthority,
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  color: isDark
-                                      ? AppColors.textSecondaryDark
-                                      : AppColors.textSecondaryLight,
-                                  height: 1.3,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.acceptableOptionsHeader,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: isDark
+                          ? AppColors.textMutedDark
+                          : AppColors.textMutedLight,
                     ),
-                  );
-                }).toList(),
+                  ),
+                  const SizedBox(height: 8),
+                  ...widget.requirement.acceptedEvidence.map(
+                    (ev) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Icon(
+                              Icons.check_circle_outline,
+                              size: 14,
+                              color: isDark
+                                  ? AppColors.successTextDark
+                                  : AppColors.successTextLight,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  ev.name,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? AppColors.textPrimaryDark
+                                        : AppColors.textPrimaryLight,
+                                  ),
+                                ),
+                                if (ev.conditions != null) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    ev.conditions!,
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontStyle: FontStyle.italic,
+                                      color: isDark
+                                          ? AppColors.textSecondaryDark
+                                          : AppColors.textSecondaryLight,
+                                    ),
+                                  ),
+                                ],
+                                Text(
+                                  '${l10n.issuingAuthorityPrefix}${ev.issuingAuthority}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark
+                                        ? AppColors.textMutedDark
+                                        : AppColors.textMutedLight,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
-
-          Divider(
-            height: 1,
-            color: isDark
-                ? AppColors.borderSubtleDark
-                : AppColors.borderSubtleLight,
-          ),
-
-          // Official Source Link Strip (Generous clickable area)
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              key: Key('source_link_${widget.requirement.id}'),
-              onTap: widget.onOpenSource,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(AppRadius.card),
-                bottomRight: Radius.circular(AppRadius.card),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 9,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Official source: ${widget.requirement.source.title} (${widget.requirement.source.verifiedDate})',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark
-                              ? AppColors.textMutedDark
-                              : AppColors.textMutedLight,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.open_in_new,
-                      size: 13,
-                      color: isDark
-                          ? AppColors.silverAccent
-                          : AppColors.sapphirePrimary,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -707,9 +542,11 @@ class _GuidanceRowCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(AppRadius.card),
@@ -717,120 +554,49 @@ class _GuidanceRowCard extends StatelessWidget {
           color: isDark ? AppColors.borderDark : AppColors.borderLight,
         ),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+          Icon(
+            Icons.info_outline_rounded,
+            size: 18,
+            color: isDark ? AppColors.silverAccent : AppColors.sapphirePrimary,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   requirement.title,
                   style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
                     color: isDark
                         ? AppColors.textPrimaryDark
                         : AppColors.textPrimaryLight,
-                    letterSpacing: -0.1,
                   ),
                 ),
-                const SizedBox(height: 8),
-                ...requirement.acceptedEvidence.map(
-                  (guide) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.check_circle_outline,
-                          size: 15,
-                          color: isDark
-                              ? AppColors.silverAccent
-                              : AppColors.sapphirePrimary,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                guide.name,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark
-                                      ? AppColors.textPrimaryDark
-                                      : AppColors.textPrimaryLight,
-                                ),
-                              ),
-                              if (guide.conditions != null)
-                                Text(
-                                  guide.conditions!,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: isDark
-                                        ? AppColors.textSecondaryDark
-                                        : AppColors.textSecondaryLight,
-                                    height: 1.3,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                const SizedBox(height: 3),
+                Text(
+                  requirement.explanation,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                    height: 1.35,
                   ),
                 ),
               ],
             ),
           ),
-          Divider(
-            height: 1,
-            color: isDark
-                ? AppColors.borderSubtleDark
-                : AppColors.borderSubtleLight,
-          ),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onOpenSource,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(AppRadius.card),
-                bottomRight: Radius.circular(AppRadius.card),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 9,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Official source: ${requirement.source.title} (${requirement.source.verifiedDate})',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark
-                              ? AppColors.textMutedDark
-                              : AppColors.textMutedLight,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.open_in_new,
-                      size: 13,
-                      color: isDark
-                          ? AppColors.silverAccent
-                          : AppColors.sapphirePrimary,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.open_in_new_rounded, size: 16),
+            tooltip: l10n.sourceLinkTooltip(requirement.source.title),
+            onPressed: onOpenSource,
+            visualDensity: VisualDensity.compact,
+            color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
           ),
         ],
       ),
