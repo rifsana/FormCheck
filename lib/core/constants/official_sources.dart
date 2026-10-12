@@ -19,6 +19,14 @@ class OfficialSource {
 class OfficialSources {
   static const String verifiedDate = 'October 2026';
 
+  static const OfficialSource passportSevaPortal = OfficialSource(
+    id: 'passport_seva_portal',
+    title: 'Passport Seva Portal',
+    url: 'https://www.passportindia.gov.in',
+    verifiedDate: verifiedDate,
+    note: 'Official portal of the Ministry of External Affairs, Government of India.',
+  );
+
   static const OfficialSource docAdvisor = OfficialSource(
     id: 'doc_advisor_fresh',
     title: 'Passport Seva Document Advisor (Fresh Passport)',

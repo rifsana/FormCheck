@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/official_sources.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../domain/passport_rule.dart';
@@ -22,9 +23,7 @@ class ChecklistScreen extends ConsumerWidget {
       } catch (_) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Could not open external official link.'),
-            ),
+            SnackBar(content: Text(context.l10n.couldNotOpenLink)),
           );
         }
       }
@@ -35,10 +34,11 @@ class ChecklistScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final resolution = ref.watch(checklistResolutionProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
 
     if (!resolution.isSupported) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Checklist Error')),
+        appBar: AppBar(title: Text(l10n.unsupportedCategoryTitle)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -55,14 +55,14 @@ class ChecklistScreen extends ConsumerWidget {
                 const SizedBox(height: 14),
                 Text(
                   resolution.unsupportedReason ??
-                      'Unsupported application category.',
+                      l10n.unsupportedCategoryAdvisorNotice,
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 14.5),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () => context.pop(),
-                  child: const Text('Back to Profile'),
+                  child: Text(l10n.backButton),
                 ),
               ],
             ),
@@ -73,11 +73,11 @@ class ChecklistScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Your document checklist'),
+        title: Text(l10n.checklistTitle),
         actions: [
           IconButton(
             key: const Key('official_advisor_appbar_action'),
-            tooltip: 'Official Document Advisor',
+            tooltip: l10n.officialAdvisorAction,
             icon: const Icon(Icons.open_in_browser_rounded, size: 20),
             onPressed: () =>
                 _openSourceUrl(context, OfficialSources.docAdvisor.url),
@@ -112,7 +112,7 @@ class ChecklistScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Required Documents',
+                          l10n.requiredDocumentsHeader,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -150,8 +150,8 @@ class ChecklistScreen extends ConsumerWidget {
                           ),
                           child: Text(
                             resolution.isNonEcrEligible
-                                ? 'Non-ECR'
-                                : 'ECR Category',
+                                ? l10n.nonEcrBadge
+                                : l10n.ecrBadge,
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
@@ -186,7 +186,7 @@ class ChecklistScreen extends ConsumerWidget {
 
               // SECTION 1: Mandatory Documents
               Text(
-                'DOCUMENTS EVERYONE NEEDS',
+                l10n.sectionEveryoneNeeds,
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
@@ -209,7 +209,7 @@ class ChecklistScreen extends ConsumerWidget {
               if (resolution.conditionalRequirements.isNotEmpty) ...[
                 const SizedBox(height: 20),
                 Text(
-                  'ADDITIONAL DOCUMENTS FOR YOUR CASE',
+                  l10n.sectionAdditionalDocs,
                   style: TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
@@ -232,7 +232,7 @@ class ChecklistScreen extends ConsumerWidget {
               // SECTION 3: PSK In-Person Guidance
               const SizedBox(height: 20),
               Text(
-                'WHAT TO BRING TO YOUR APPOINTMENT',
+                l10n.sectionWhatToBring,
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
@@ -279,7 +279,7 @@ class ChecklistScreen extends ConsumerWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Always carry original documents along with self-attested photocopies to your Passport Seva Kendra (PSK) appointment.',
+                        l10n.appointmentNotice,
                         style: TextStyle(
                           fontSize: 12,
                           color: isDark
@@ -322,6 +322,7 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -398,8 +399,10 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
                           const SizedBox(width: 6),
                           Text(
                             _expanded
-                                ? 'Hide accepted documents'
-                                : 'What documents are accepted? (${widget.requirement.acceptedEvidence.length})',
+                                ? l10n.hideAcceptedDocs
+                                : l10n.whatDocsAccepted(
+                                    widget.requirement.acceptedEvidence.length,
+                                  ),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -416,8 +419,9 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
                 IconButton(
                   key: Key('source_link_${widget.requirement.id}'),
                   icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                  tooltip:
-                      'Official source: ${widget.requirement.source.title}',
+                  tooltip: l10n.sourceLinkTooltip(
+                    widget.requirement.source.title,
+                  ),
                   onPressed: widget.onOpenSource,
                   visualDensity: VisualDensity.compact,
                   color: isDark
@@ -445,7 +449,7 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'ACCEPTABLE OPTIONS (BRING AT LEAST ONE ORIGINAL):',
+                    l10n.acceptableOptionsHeader,
                     style: TextStyle(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
@@ -501,7 +505,7 @@ class _ChecklistRowCardState extends State<_ChecklistRowCard> {
                                   ),
                                 ],
                                 Text(
-                                  'Authority: ${ev.issuingAuthority}',
+                                  '${l10n.issuingAuthorityPrefix}${ev.issuingAuthority}',
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: isDark
@@ -538,6 +542,7 @@ class _GuidanceRowCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = context.l10n;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -588,7 +593,7 @@ class _GuidanceRowCard extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.open_in_new_rounded, size: 16),
-            tooltip: 'Official source: ${requirement.source.title}',
+            tooltip: l10n.sourceLinkTooltip(requirement.source.title),
             onPressed: onOpenSource,
             visualDensity: VisualDensity.compact,
             color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,

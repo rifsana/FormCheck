@@ -4,6 +4,7 @@ import '../../features/welcome/presentation/welcome_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/checklist/presentation/checklist_screen.dart';
 import '../../features/readiness/presentation/readiness_screen.dart';
+import '../../features/settings/presentation/settings_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -20,6 +21,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/readiness',
       builder: (context, state) => const ReadinessScreen(),
+    ),
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingsScreen(),
     ),
   ],
 );

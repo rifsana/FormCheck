@@ -28,6 +28,10 @@ class ProfileNotifier extends Notifier<ApplicantProfile> {
     state = state.copyWith(hasNameChange: hasNameChange);
   }
 
+  void updateHasResidedMultipleAddresses(bool hasResided) {
+    state = state.copyWith(hasResidedMultipleAddressesPastYear: hasResided);
+  }
+
   void reset() {
     state = const ApplicantProfile();
   }
